@@ -60,9 +60,11 @@ public class Note extends PanacheEntity {
 //    private BaseEntity target;
 
 	@NotEmpty
+	@Column(name = "source_code")
     public String sourceCode;
     
 	@NotEmpty
+	@Column(name = "target_code")
     public String targetCode;
 
 	@SuppressWarnings("unused")
