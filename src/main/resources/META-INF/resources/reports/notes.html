@@ -115,8 +115,10 @@
             <table style="width: 100%;" id="queuetable" class="table table-striped table-bordered table-sm table-condensed">
                 <thead class="thead-dark">
                 <tr>
+                <th>time</th>
                     <th>source</th>
                     <th>target</th>
+                    <th>category</th>
                     <th>content</th>
                    </tr>
 
@@ -165,6 +167,10 @@
       lengthChange: true,
       pageLength: 1000,
       columns: [
+          {
+              name: 'Time',
+              data: 'created'
+            },
         {
           name: 'Source',
           data: 'sourceCode'
@@ -173,6 +179,10 @@
             name: 'Target',
             data: 'targetCode'
           },
+          {
+              name: 'Catgeory',
+              data: 'attributeCode'
+            },
         {
             name: 'Content',
             data: 'content'

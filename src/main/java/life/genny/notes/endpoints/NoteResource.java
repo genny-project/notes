@@ -7,6 +7,7 @@ import java.util.List;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.ws.rs.BeanParam;
@@ -24,9 +25,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Criteria;
+import org.hibernate.criterion.Restrictions;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
-
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
@@ -38,6 +41,8 @@ import io.quarkus.security.identity.SecurityIdentity;
 import life.genny.notes.models.DataTable;
 import life.genny.notes.models.Note;
 import life.genny.notes.models.PageRequest;
+import life.genny.qwanda.Question;
+import life.genny.qwanda.attribute.Attribute;
 import life.genny.qwanda.entity.BaseEntity;
 
 @Path("/v7/notes")
@@ -63,21 +68,50 @@ public class NoteResource {
 		return Note.listAll(Sort.by("created"));
 	}
 
-	
 	@GET
 	public Response getAll(@BeanParam PageRequest pageRequest) {
-	    return Response.ok(Note.findAll()
-	                    .page(Page.of(pageRequest.getPageNum(), pageRequest.getPageSize()))
-	                    .list()).build();
+		return Response.ok(Note.findAll().page(Page.of(pageRequest.getPageNum(), pageRequest.getPageSize())).list())
+				.build();
 	}
-	
+
 	@Transactional
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response newNote(@Valid Note note) {
 		note.id = null;
+		// Fetch the base entities
+		BaseEntity sourceBE = (BaseEntity) em
+				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
+				.setParameter("realmStr", note.realm).setParameter("code", note.sourceCode).getSingleResult();
+		if (sourceBE == null) {
+			throw new WebApplicationException("BaseEntity with code " + note.sourceCode + " does not exist.",
+					Status.NOT_FOUND);
+		}
+
+		BaseEntity targetBE = (BaseEntity) em
+				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
+				.setParameter("realmStr", note.realm).setParameter("code", note.targetCode).getSingleResult();
+
+		if (targetBE == null) {
+			throw new WebApplicationException("BaseEntity with code " + note.targetCode + " does not exist.",
+					Status.NOT_FOUND);
+		}
+
+		if (StringUtils.isBlank(note.attributeCode)) {
+			note.attributeCode = Note.DEFAULT_ATTRIBUTE_CODE; 
+		}
 		
+		Attribute attribute = (Attribute) em
+				.createQuery("SELECT a FROM Attribute a where a.realm=:realmStr and a.code=:code")
+				.setParameter("realmStr", "internmatch").setParameter("code", note.attributeCode).getSingleResult();
+		if (attribute == null) {
+			throw new WebApplicationException("Attribute with code " + note.attributeCode + " does not exist.",
+					Status.NOT_FOUND);
+		}
+		note.setSource(sourceBE);
+		note.setTarget(targetBE);
+		note.setAttribute(attribute);
 		note.persist();
 		// TODO, show location
 		return Response.status(Status.CREATED).entity(note.id).build();
@@ -137,7 +171,11 @@ public class NoteResource {
 		} else {
 			filteredDevice = Note.findAll();
 		}
-		int page_number = start / length;
+		
+		int page_number = 0;
+		if (length > 0) {
+			page_number = start / length;
+		}
 		filteredDevice.page(page_number, length);
 
 		log.info("/datatable: search=[" + searchVal + "],start=" + start + ",length=" + length + ",result#="
@@ -154,6 +192,31 @@ public class NoteResource {
 	@Transactional
 	void onStart(@Observes StartupEvent ev) {
 		log.info("Note Endpoint starting");
+
+		// Creating some test
+		// Fetch the base entities
+		BaseEntity sourceBE = (BaseEntity) em
+				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
+				.setParameter("realmStr", "internmatch").setParameter("code", "PER_USER1").getSingleResult();
+
+		Attribute attribute = (Attribute) em
+				.createQuery("SELECT a FROM Attribute a where a.realm=:realmStr and a.code=:code")
+				.setParameter("realmStr", "internmatch").setParameter("code", Note.DEFAULT_ATTRIBUTE_CODE).getSingleResult();
+
+		if (sourceBE != null) {
+
+			if (Note.count() == 0) {
+
+				Note test1 = new Note("internmatch", sourceBE, sourceBE, attribute,"This is the first note!");
+				test1.persist();
+
+				Note test2 = new Note("internmatch", sourceBE, sourceBE, attribute,"This is the second note!");
+				test2.persist();
+			}
+		} else {
+			log.error("No Baseentitys set up yet in Database");
+		}
+
 	}
 
 	@Transactional

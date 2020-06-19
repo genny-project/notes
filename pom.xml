@@ -8,7 +8,7 @@
 	<artifactId>notes</artifactId>
 	<version>3.1.0</version>
 	<properties>
-		<qwanda-utils.version>${project.version}</qwanda-utils.version>
+		<qwanda.version>${project.version}</qwanda.version>
 
 		<compiler-plugin.version>3.8.1</compiler-plugin.version>
 		<docker-plugin.version>0.32.0</docker-plugin.version>
@@ -132,15 +132,9 @@
 		</dependency>
 		<dependency>
 			<groupId>life.genny</groupId>
-			<artifactId>qwanda-utils</artifactId>
-			<version>${qwanda-utils.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>io.vertx</groupId>
-					<artifactId>vertx-core</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+			<artifactId>qwanda</artifactId>
+			<version>${qwanda.version}</version>
+			</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>testcontainers</artifactId>
@@ -156,6 +150,19 @@
 	</dependencies>
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.jboss.jandex</groupId>
+				<artifactId>jandex-maven-plugin</artifactId>
+				<version>1.0.7</version>
+				<executions>
+					<execution>
+						<id>make-index</id>
+						<goals>
+							<goal>jandex</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>io.quarkus</groupId>
 				<artifactId>quarkus-maven-plugin</artifactId>

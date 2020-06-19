@@ -3,6 +3,7 @@ package life.genny.notes.models;
 import java.lang.invoke.MethodHandles;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Objects;
 
 import javax.json.bind.annotation.JsonbTransient;
 import javax.persistence.Column;
@@ -20,6 +21,7 @@ import org.jboss.logging.Logger;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import life.genny.qwanda.attribute.Attribute;
 import life.genny.qwanda.entity.BaseEntity;
 
 /*
@@ -33,6 +35,7 @@ import life.genny.qwanda.entity.BaseEntity;
 public class Note extends PanacheEntity {
 
 	private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getCanonicalName());
+	public static final String DEFAULT_ATTRIBUTE_CODE = "PRI_TEXT";
 
 	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")		
 	public LocalDateTime created  = LocalDateTime.now(ZoneId.of("UTC"));
@@ -40,29 +43,42 @@ public class Note extends PanacheEntity {
 	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")		
 	public LocalDateTime updated;
 
-
+	@NotEmpty
+	public String realm;
+	
 	@FullTextField(analyzer = "english")
 	@Column(name = "content")
 	@NotEmpty
 	public String content;
 
 	
-//    @ManyToOne(targetEntity = life.genny.qwanda.entity.BaseEntity.class)
-//    @JoinColumn(name = "source_id")
-//    @JsonbTransient    
-//  //  @NotNull
-//    private BaseEntity source;
-//
-//    @ManyToOne(targetEntity = life.genny.qwanda.entity.BaseEntity.class)
-//    @JoinColumn(name = "target_id")
-//    @JsonbTransient   
-// //   @NotNull
-//    private BaseEntity target;
+    @ManyToOne
+    @JoinColumn(name = "source_id")
+    @JsonbTransient    
+    @NotNull
+    private BaseEntity source;
+
+    @ManyToOne
+    @JoinColumn(name = "target_id")
+   @JsonbTransient   
+   @NotNull
+    private BaseEntity target;
 
 	@NotEmpty
 	@Column(name = "source_code")
     public String sourceCode;
     
+
+	@Column(name = "attribute_code")
+    public String attributeCode = DEFAULT_ATTRIBUTE_CODE;
+	
+    @ManyToOne
+    @JoinColumn(name = "attribute_id")
+   // @JsonbTransient   
+    @NotNull
+    private Attribute attribute;
+	
+	
 	@NotEmpty
 	@Column(name = "target_code")
     public String targetCode;
@@ -71,106 +87,103 @@ public class Note extends PanacheEntity {
 	public Note() {
 	}
 
-	public Note(final BaseEntity sourceBE, BaseEntity targetBE, final String content) {
+	
+	public Note(final String realm,final BaseEntity sourceBE, final BaseEntity targetBE, final Attribute attribute,final String content) {
 		this.created = LocalDateTime.now(ZoneId.of("UTC"));
 		this.updated = LocalDateTime.now(ZoneId.of("UTC"));
+		this.realm = realm;
 		this.content = content;
-	//	this.setSource(sourceBE);
-	//	this.setTarget(targetBE);
+		this.setAttribute(attribute);
+		this.setSource(sourceBE);
+		this.setTarget(targetBE);
 	}
 
 
 	
 	
-//	/**
-//	 * @return the source
-//	 */
-//	public BaseEntity getSource() {
-//		return source;
-//	}
-//
-//	/**
-//	 * @param source the source to set
-//	 */
-//	public void setSource(BaseEntity source) {
-//		this.source = source;
-//		this.sourceCode = source.getCode();
-//	}
-//
-//	/**
-//	 * @return the target
-//	 */
-//	public BaseEntity getTarget() {
-//		return target;
-//	}
-//
-//	/**
-//	 * @param target the target to set
-//	 */
-//	public void setTarget(BaseEntity target) {
-//		this.target = target;
-//		this.targetCode = target.getCode();
-//	}
+	/**
+	 * @return the source
+	 */
+	public BaseEntity getSource() {
+		return source;
+	}
+
+	/**
+	 * @param source the source to set
+	 */
+	public void setSource(BaseEntity source) {
+		this.source = source;
+		this.sourceCode = source.getCode();
+	}
+
+	/**
+	 * @return the target
+	 */
+	public BaseEntity getTarget() {
+		return target;
+	}
+
+	/**
+	 * @param target the target to set
+	 */
+	public void setTarget(BaseEntity target) {
+		this.target = target;
+		this.targetCode = target.getCode();
+	}
 
 
 
-	public static Note findById(Long id) {
-		return find("id", id).firstResult();
+	/**
+	 * @return the attribute
+	 */
+	public Attribute getAttribute() {
+		return attribute;
+	}
+
+	/**
+	 * @param attribute the attribute to set
+	 */
+	public void setAttribute(Attribute attribute) {
+		this.attribute = attribute;
+		this.attributeCode = attribute.getCode();
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((content == null) ? 0 : content.hashCode());
-		result = prime * result + ((created == null) ? 0 : created.hashCode());
-		result = prime * result + ((sourceCode == null) ? 0 : sourceCode.hashCode());
-		result = prime * result + ((targetCode == null) ? 0 : targetCode.hashCode());
-		result = prime * result + ((updated == null) ? 0 : updated.hashCode());
-		return result;
+		return Objects.hash(attributeCode, created, realm, sourceCode, targetCode);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof Note))
 			return false;
 		Note other = (Note) obj;
-		if (content == null) {
-			if (other.content != null)
-				return false;
-		} else if (!content.equals(other.content))
-			return false;
-		if (created == null) {
-			if (other.created != null)
-				return false;
-		} else if (!created.equals(other.created))
-			return false;
-		if (sourceCode == null) {
-			if (other.sourceCode != null)
-				return false;
-		} else if (!sourceCode.equals(other.sourceCode))
-			return false;
-		if (targetCode == null) {
-			if (other.targetCode != null)
-				return false;
-		} else if (!targetCode.equals(other.targetCode))
-			return false;
-		if (updated == null) {
-			if (other.updated != null)
-				return false;
-		} else if (!updated.equals(other.updated))
-			return false;
-		return true;
+		return Objects.equals(attributeCode, other.attributeCode) && Objects.equals(created, other.created)
+				&& Objects.equals(realm, other.realm) && Objects.equals(sourceCode, other.sourceCode)
+				&& Objects.equals(targetCode, other.targetCode);
 	}
+
+	
+	
+	@Override
+	public String toString() {
+		return "Note [" + (created != null ? "created=" + created + ", " : "")
+				+ (sourceCode != null ? "sourceCode=" + sourceCode + ", " : "")
+				+ (targetCode != null ? "targetCode=" + targetCode + ", " : "")
+				+ (attributeCode != null ? "attributeCode=" + attributeCode + ", " : "")
+				+ (content != null ? "content=" + content : "") + "]";
+	}
+
+	public static Note findById(Long id) {
+		return find("id", id).firstResult();
+	}
+
 
 	public static long deleteById(final Long id) {
 		return delete("id", id);
 	}
-
 
 
 }
