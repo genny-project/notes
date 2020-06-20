@@ -142,7 +142,17 @@ public class NoteResource {
 		return Response.status(Status.OK).entity(note).build();
 	}
 	
-	@Path("/{targetCode}{attributeCode:(/attributeCode/[^/]+?)?}")
+	
+	@Path("/{targetCode}")
+	@GET
+	//@RolesAllowed({"Everyone"})  
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getNotesByTargetCode(@PathParam("targetCode") final String targetCode,
+			 @QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
+			    @QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
+		return getNotesByTargetCodeAndAttribute(targetCode,Note.DEFAULT_ATTRIBUTE_CODE,pageIndex,pageSize);
+	}
+	@Path("/{targetCode}/{attributeCode}")
 	@GET
 	//@RolesAllowed({"Everyone"})  
 	@Produces(MediaType.APPLICATION_JSON)
