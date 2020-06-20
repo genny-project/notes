@@ -1,9 +1,12 @@
 package life.genny.notes.endpoints;
 
 import java.lang.invoke.MethodHandles;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.security.RolesAllowed;
 import javax.enterprise.event.Observes;
@@ -24,9 +27,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -45,6 +50,7 @@ import io.quarkus.security.identity.SecurityIdentity;
 import life.genny.notes.models.DataTable;
 import life.genny.notes.models.Note;
 import life.genny.notes.models.PageRequest;
+import life.genny.notes.models.Tag;
 import life.genny.qwanda.Question;
 import life.genny.qwanda.attribute.Attribute;
 import life.genny.qwanda.entity.BaseEntity;
@@ -71,22 +77,39 @@ public class NoteResource {
 		return Response.ok().build();
 	}
 
-	@GET
-	public List<Note> getAll() {
-		return Note.listAll(Sort.by("created"));
-	}
 
 	@GET
-	public Response getAll(@BeanParam PageRequest pageRequest) {
-		return Response.ok(Note.findAll().page(Page.of(pageRequest.getPageNum(), pageRequest.getPageSize())).list())
-				.build();
+	//@RolesAllowed({"Everyone"})  
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getNotesByTags(
+			@QueryParam("tags") String tags,
+			 @QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
+			    @QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
+		String realm = securityIdentity.getAttribute("aud"); //realm
+		if (realm==null) {
+			realm = defaultRealm;
+		}
+
+		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
+		List<Tag> tagList = tagStringList.stream()
+				  .collect(
+				    Collectors.mapping(
+				      p -> new Tag(p),
+				      Collectors.toList()));		
+		List<Note> notes = Note.findByTags(realm,tagList, Page.of(pageIndex, pageSize));
+		if ((notes == null)||(notes.isEmpty())) {
+			notes = new ArrayList<Note>();
+		}
+
+		return Response.status(Status.OK).entity(notes).build();
 	}
+	
 
 	@Transactional
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response newNote(@Valid Note note) {
+	public Response newNote(@Context UriInfo uriInfo,@Valid Note note) {
 		note.id = null;
 		
 		String realm = securityIdentity.getAttribute("aud"); //realm
@@ -111,29 +134,21 @@ public class NoteResource {
 					Status.NOT_FOUND);
 		}
 
-		if (StringUtils.isBlank(note.attributeCode)) {
-			note.attributeCode = Note.DEFAULT_ATTRIBUTE_CODE; 
-		}
-		
-		Attribute attribute = (Attribute) em
-				.createQuery("SELECT a FROM Attribute a where a.realm=:realmStr and a.code=:code")
-				.setParameter("realmStr", "internmatch").setParameter("code", note.attributeCode).getSingleResult();
-		if (attribute == null) {
-			throw new WebApplicationException("Attribute with code " + note.attributeCode + " does not exist.",
-					Status.NOT_FOUND);
-		}
 		note.setSource(sourceBE);
 		note.setTarget(targetBE);
-		note.setAttribute(attribute);
 		note.persist();
-		// TODO, show location
-		return Response.status(Status.CREATED).entity(note.id).build();
+		
+	      URI uri = uriInfo.getAbsolutePathBuilder()
+	                .path(NoteResource.class)
+	                .path(NoteResource.class, "findById")
+	                .build(note.id);
+	        return Response.created(uri).build();
 	}
 
 	@Path("/id/{id}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getNoteById(@PathParam("id") final String id) {
+	public Response findById(@PathParam("id") final String id) {
 		Note note = Note.findById(id);
 		if (note == null) {
 			throw new WebApplicationException("Note with id of " + id + " does not exist.", Status.NOT_FOUND);
@@ -147,27 +162,22 @@ public class NoteResource {
 	@GET
 	//@RolesAllowed({"Everyone"})  
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getNotesByTargetCode(@PathParam("targetCode") final String targetCode,
-			 @QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
-			    @QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
-		return getNotesByTargetCodeAndAttribute(targetCode,Note.DEFAULT_ATTRIBUTE_CODE,pageIndex,pageSize);
-	}
-	@Path("/{targetCode}/{attributeCode}")
-	@GET
-	//@RolesAllowed({"Everyone"})  
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getNotesByTargetCodeAndAttribute(@PathParam("targetCode") final String targetCode,
-			@PathParam("attributeCode") String attributeCode,
+	public Response getNotesByTargetCodeAndTags(@PathParam("targetCode") final String targetCode,
+			@QueryParam("tags") @DefaultValue("") String tags,
 			 @QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
 			    @QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
 		String realm = securityIdentity.getAttribute("aud"); //realm
 		if (realm==null) {
 			realm = defaultRealm;
 		}
-		if (StringUtils.isBlank(attributeCode)) {
-			attributeCode = Note.DEFAULT_ATTRIBUTE_CODE;
-		}
-		List<Note> notes = Note.findByTargetAndAttributeCode(realm,targetCode,attributeCode, Page.of(pageIndex, pageSize));
+
+		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
+		List<Tag> tagList = tagStringList.stream()
+				  .collect(
+				    Collectors.mapping(
+				      p -> new Tag(p),
+				      Collectors.toList()));		
+		List<Note> notes = Note.findByTargetAndTags(realm,tagList,targetCode, Page.of(pageIndex, pageSize));
 		if ((notes == null)||(notes.isEmpty())) {
 			notes = new ArrayList<Note>();
 		}
@@ -195,6 +205,10 @@ public class NoteResource {
 	@Path("{id}")
 	@DELETE
 	public Response deleteNote(@PathParam("id") final String id) {
+        Note n = Note.findById(id);
+        if(n == null)
+            throw new WebApplicationException(Status.NOT_FOUND);
+ 
 		Note.deleteById(id);
 		return Response.status(Status.OK).build();
 	}
@@ -246,18 +260,25 @@ public class NoteResource {
 				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
 				.setParameter("realmStr", "internmatch").setParameter("code", "PER_USER1").getSingleResult();
 
-		Attribute attribute = (Attribute) em
-				.createQuery("SELECT a FROM Attribute a where a.realm=:realmStr and a.code=:code")
-				.setParameter("realmStr", "internmatch").setParameter("code", Note.DEFAULT_ATTRIBUTE_CODE).getSingleResult();
 
 		if (sourceBE != null) {
 
 			if (Note.count() == 0) {
+				
+				 List<Tag> tags1 = Arrays.asList(
+			                new Tag("phone", 1),
+			                new Tag("intern", 3)
+			        );
 
-				Note test1 = new Note("internmatch", sourceBE, sourceBE, attribute,"This is the first note!");
+				 List<Tag> tags2 = Arrays.asList(
+			                new Tag("intern", 1),
+			                new Tag("rating", 5)
+			        );
+
+				Note test1 = new Note(defaultRealm, sourceBE, sourceBE, tags1,"This is the first note!");
 				test1.persist();
 
-				Note test2 = new Note("internmatch", sourceBE, sourceBE, attribute,"This is the second note!");
+				Note test2 = new Note(defaultRealm, sourceBE, sourceBE, tags2,"This is the second note!");
 				test2.persist();
 			}
 		} else {

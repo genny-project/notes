@@ -3,11 +3,13 @@ package life.genny.notes.models;
 import java.lang.invoke.MethodHandles;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.json.bind.annotation.JsonbTransient;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -21,12 +23,10 @@ import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
-import io.quarkus.panache.common.Sort;
-import life.genny.qwanda.attribute.Attribute;
+import io.quarkus.panache.common.Parameters;
 import life.genny.qwanda.entity.BaseEntity;
 
 /*
@@ -40,13 +40,16 @@ import life.genny.qwanda.entity.BaseEntity;
 public class Note extends PanacheEntity {
 
 	private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getCanonicalName());
-	public static final String DEFAULT_ATTRIBUTE_CODE = "PRI_TEXT";
+	public static final String DEFAULT_TAG = "default";
 
 	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
 	public LocalDateTime created = LocalDateTime.now(ZoneId.of("UTC"));
 
 	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
 	public LocalDateTime updated;
+
+	@ElementCollection
+	public List<Tag> tags = new ArrayList<>();
 
 	@NotEmpty
 	@JsonbTransient
@@ -73,15 +76,6 @@ public class Note extends PanacheEntity {
 	@Column(name = "source_code")
 	public String sourceCode;
 
-	@Column(name = "attribute_code")
-	public String attributeCode = DEFAULT_ATTRIBUTE_CODE;
-
-	@ManyToOne
-	@JoinColumn(name = "attribute_id")
-	@JsonbTransient
-	@NotNull
-	private Attribute attribute;
-
 	@NotEmpty
 	@Column(name = "target_code")
 	public String targetCode;
@@ -90,13 +84,16 @@ public class Note extends PanacheEntity {
 	public Note() {
 	}
 
-	public Note(final String realm, final BaseEntity sourceBE, final BaseEntity targetBE, final Attribute attribute,
+	public Note(final String realm, final BaseEntity sourceBE, final BaseEntity targetBE, final List<Tag> tags,
 			final String content) {
 		this.created = LocalDateTime.now(ZoneId.of("UTC"));
 		this.updated = LocalDateTime.now(ZoneId.of("UTC"));
 		this.realm = realm;
 		this.content = content;
-		this.setAttribute(attribute);
+//		if (tags.isEmpty()) {
+//			tags.add(new Tag(DEFAULT_TAG));
+//		}
+		this.tags = tags;
 		this.setSource(sourceBE);
 		this.setTarget(targetBE);
 	}
@@ -131,47 +128,6 @@ public class Note extends PanacheEntity {
 		this.targetCode = target.getCode();
 	}
 
-	/**
-	 * @return the attribute
-	 */
-	public Attribute getAttribute() {
-		return attribute;
-	}
-
-	/**
-	 * @param attribute the attribute to set
-	 */
-	public void setAttribute(Attribute attribute) {
-		this.attribute = attribute;
-		this.attributeCode = attribute.getCode();
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(attributeCode, created, realm, sourceCode, targetCode);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!(obj instanceof Note))
-			return false;
-		Note other = (Note) obj;
-		return Objects.equals(attributeCode, other.attributeCode) && Objects.equals(created, other.created)
-				&& Objects.equals(realm, other.realm) && Objects.equals(sourceCode, other.sourceCode)
-				&& Objects.equals(targetCode, other.targetCode);
-	}
-
-	@Override
-	public String toString() {
-		return "Note [" + (created != null ? "created=" + created + ", " : "")
-				+ (sourceCode != null ? "sourceCode=" + sourceCode + ", " : "")
-				+ (targetCode != null ? "targetCode=" + targetCode + ", " : "")
-				+ (attributeCode != null ? "attributeCode=" + attributeCode + ", " : "")
-				+ (content != null ? "content=" + content : "") + "]";
-	}
-
 	public static Note findById(Long id) {
 		return find("id", id).firstResult();
 	}
@@ -180,15 +136,38 @@ public class Note extends PanacheEntity {
 		return delete("id", id);
 	}
 
-	public static List<Note> findByTargetCode(final String code, Page page) {
-		List<Note> notes = Note.find("targetCode", code).page(page).list();
-		return notes;
-	}
-	
-	public static List<Note> findByTargetAndAttributeCode(String realm,final String targetCode, String attributeCode, Page page) {
-		PanacheQuery<Note> notes = Note.find("select n from Note n where n.targetCode = ?1 and n.realm = ?2 and n.attributeCode = ?3 order by n.created", targetCode,realm,attributeCode);
+	public static List<Note> findByTags(final String realm, final List<Tag> tags, Page page) {
+		List<String> tagStringList = tags.stream().collect(Collectors.mapping(p -> p.getName(), Collectors.toList()));
+
+		// PanacheQuery<Note> notes = Note.find("select n from Note n JOIN n.tags t
+		// where n.realm = ?1 and t.name in (?2) order by n.created", realm,tags);
+		PanacheQuery<Note> notes = Note.find(
+				"select n from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags) order by n.created",
+				Parameters.with("realm", realm).and("tags", tagStringList));
+
 		return notes.page(page).list();
 	}
 
+	public static List<Note> findByTargetAndTags(String realm, final List<Tag> tags, final String targetCode,
+			Page page) {
+		List<String> tagStringList = tags.stream().collect(Collectors.mapping(p -> p.getName(), Collectors.toList()));
 
+		PanacheQuery<Note> notes = null;
+//		PanacheQuery<Note> notes = Note.find("select n from Note n JOIN n.tags t where n.realm = ?1 and t.name in (?2) and n.targetCode = ?3  order by n.created", realm,tagStringList,targetCode);
+		
+//		if (!tagStringList.isEmpty()) {
+//			tagStringList.add(DEFAULT_TAG);
+//		}
+		if (!tagStringList.isEmpty()) {
+			notes = Note.find(
+					"select n from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags) and n.targetCode = :targetCode  order by n.created",
+					Parameters.with("realm", realm).and("targetCode", targetCode).and("tags", tagStringList));
+		} else {
+			notes = Note.find(
+					"select n from Note n  where n.realm = :realm  and n.targetCode = :targetCode  order by n.created",
+					Parameters.with("realm", realm).and("targetCode", targetCode));
+		}
+		return notes.page(page).list();
+
+	}
 }
