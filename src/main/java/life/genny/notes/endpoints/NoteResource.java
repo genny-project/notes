@@ -2,8 +2,10 @@ package life.genny.notes.endpoints;
 
 import java.lang.invoke.MethodHandles;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.security.RolesAllowed;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -13,6 +15,7 @@ import javax.validation.Valid;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
@@ -26,6 +29,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 import org.jboss.logging.Logger;
@@ -52,6 +56,10 @@ public class NoteResource {
 
 	private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getCanonicalName());
 
+	@ConfigProperty(name = "default.realm", defaultValue = "genny")
+	String defaultRealm;
+	
+	
 	@Inject
 	SecurityIdentity securityIdentity;
 
@@ -80,6 +88,11 @@ public class NoteResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response newNote(@Valid Note note) {
 		note.id = null;
+		
+		String realm = securityIdentity.getAttribute("aud"); //realm
+		if (realm==null) {
+			realm = defaultRealm;
+		}
 		// Fetch the base entities
 		BaseEntity sourceBE = (BaseEntity) em
 				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
@@ -117,7 +130,7 @@ public class NoteResource {
 		return Response.status(Status.CREATED).entity(note.id).build();
 	}
 
-	@Path("{id}")
+	@Path("/id/{id}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getNoteById(@PathParam("id") final String id) {
@@ -128,6 +141,30 @@ public class NoteResource {
 
 		return Response.status(Status.OK).entity(note).build();
 	}
+	
+	@Path("/{targetCode}{attributeCode:(/attributeCode/[^/]+?)?}")
+	@GET
+	//@RolesAllowed({"Everyone"})  
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getNotesByTargetCodeAndAttribute(@PathParam("targetCode") final String targetCode,
+			@PathParam("attributeCode") String attributeCode,
+			 @QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
+			    @QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
+		String realm = securityIdentity.getAttribute("aud"); //realm
+		if (realm==null) {
+			realm = defaultRealm;
+		}
+		if (StringUtils.isBlank(attributeCode)) {
+			attributeCode = Note.DEFAULT_ATTRIBUTE_CODE;
+		}
+		List<Note> notes = Note.findByTargetAndAttributeCode(realm,targetCode,attributeCode, Page.of(pageIndex, pageSize));
+		if ((notes == null)||(notes.isEmpty())) {
+			notes = new ArrayList<Note>();
+		}
+
+		return Response.status(Status.OK).entity(notes).build();
+	}
+
 
 	@Path("{id}")
 	@PUT

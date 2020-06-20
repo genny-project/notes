@@ -3,6 +3,7 @@ package life.genny.notes.models;
 import java.lang.invoke.MethodHandles;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Objects;
 
 import javax.json.bind.annotation.JsonbTransient;
@@ -20,7 +21,11 @@ import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.common.Page;
+import io.quarkus.panache.common.Sort;
 import life.genny.qwanda.attribute.Attribute;
 import life.genny.qwanda.entity.BaseEntity;
 
@@ -37,58 +42,56 @@ public class Note extends PanacheEntity {
 	private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getCanonicalName());
 	public static final String DEFAULT_ATTRIBUTE_CODE = "PRI_TEXT";
 
-	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")		
-	public LocalDateTime created  = LocalDateTime.now(ZoneId.of("UTC"));
-	
-	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")		
+	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+	public LocalDateTime created = LocalDateTime.now(ZoneId.of("UTC"));
+
+	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
 	public LocalDateTime updated;
 
 	@NotEmpty
+	@JsonbTransient
 	public String realm;
-	
+
 	@FullTextField(analyzer = "english")
 	@Column(name = "content")
 	@NotEmpty
 	public String content;
 
-	
-    @ManyToOne
-    @JoinColumn(name = "source_id")
-    @JsonbTransient    
-    @NotNull
-    private BaseEntity source;
+	@ManyToOne
+	@JoinColumn(name = "source_id")
+	@JsonbTransient
+	@NotNull
+	private BaseEntity source;
 
-    @ManyToOne
-    @JoinColumn(name = "target_id")
-   @JsonbTransient   
-   @NotNull
-    private BaseEntity target;
+	@ManyToOne
+	@JoinColumn(name = "target_id")
+	@JsonbTransient
+	@NotNull
+	private BaseEntity target;
 
 	@NotEmpty
 	@Column(name = "source_code")
-    public String sourceCode;
-    
+	public String sourceCode;
 
 	@Column(name = "attribute_code")
-    public String attributeCode = DEFAULT_ATTRIBUTE_CODE;
-	
-    @ManyToOne
-    @JoinColumn(name = "attribute_id")
-   // @JsonbTransient   
-    @NotNull
-    private Attribute attribute;
-	
-	
+	public String attributeCode = DEFAULT_ATTRIBUTE_CODE;
+
+	@ManyToOne
+	@JoinColumn(name = "attribute_id")
+	@JsonbTransient
+	@NotNull
+	private Attribute attribute;
+
 	@NotEmpty
 	@Column(name = "target_code")
-    public String targetCode;
+	public String targetCode;
 
 	@SuppressWarnings("unused")
 	public Note() {
 	}
 
-	
-	public Note(final String realm,final BaseEntity sourceBE, final BaseEntity targetBE, final Attribute attribute,final String content) {
+	public Note(final String realm, final BaseEntity sourceBE, final BaseEntity targetBE, final Attribute attribute,
+			final String content) {
 		this.created = LocalDateTime.now(ZoneId.of("UTC"));
 		this.updated = LocalDateTime.now(ZoneId.of("UTC"));
 		this.realm = realm;
@@ -98,9 +101,6 @@ public class Note extends PanacheEntity {
 		this.setTarget(targetBE);
 	}
 
-
-	
-	
 	/**
 	 * @return the source
 	 */
@@ -130,8 +130,6 @@ public class Note extends PanacheEntity {
 		this.target = target;
 		this.targetCode = target.getCode();
 	}
-
-
 
 	/**
 	 * @return the attribute
@@ -165,8 +163,6 @@ public class Note extends PanacheEntity {
 				&& Objects.equals(targetCode, other.targetCode);
 	}
 
-	
-	
 	@Override
 	public String toString() {
 		return "Note [" + (created != null ? "created=" + created + ", " : "")
@@ -180,9 +176,18 @@ public class Note extends PanacheEntity {
 		return find("id", id).firstResult();
 	}
 
-
 	public static long deleteById(final Long id) {
 		return delete("id", id);
+	}
+
+	public static List<Note> findByTargetCode(final String code, Page page) {
+		List<Note> notes = Note.find("targetCode", code).page(page).list();
+		return notes;
+	}
+	
+	public static List<Note> findByTargetAndAttributeCode(String realm,final String targetCode, String attributeCode, Page page) {
+		PanacheQuery<Note> notes = Note.find("select n from Note n where n.targetCode = ?1 and n.realm = ?2 and n.attributeCode = ?3 order by n.created", targetCode,realm,attributeCode);
+		return notes.page(page).list();
 	}
 
 
