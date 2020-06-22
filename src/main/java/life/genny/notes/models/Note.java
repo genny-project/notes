@@ -3,6 +3,7 @@ package life.genny.notes.models;
 import java.lang.invoke.MethodHandles;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
@@ -41,11 +43,14 @@ public class Note extends PanacheEntity {
 
 	private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getCanonicalName());
 	public static final String DEFAULT_TAG = "default";
+	protected final static String DATE_FORMAT_STR_ISO8601 = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
-	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+	//@JsonFormat(pattern = "yyyy-MM-ddTHH:mm:ss.SSSZ", shape = JsonFormat.Shape.STRING)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DATE_FORMAT_STR_ISO8601)
+	//@JsonSerialize(using = DateTimeDeserializer.class)
 	public LocalDateTime created = LocalDateTime.now(ZoneId.of("UTC"));
 
-	@JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+	//@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", shape = JsonFormat.Shape.STRING)
 	public LocalDateTime updated;
 
 	@ElementCollection
