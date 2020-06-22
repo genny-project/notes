@@ -62,6 +62,9 @@ public class NoteResource {
 	@ConfigProperty(name = "default.realm", defaultValue = "genny")
 	String defaultRealm;
 
+	@ConfigProperty(name = "quarkus.datasource.password")
+	String mysqlPassword;
+	
 	@Inject
 	SecurityIdentity securityIdentity;
 
@@ -272,7 +275,7 @@ public class NoteResource {
 	@Transactional
 	void onStart(@Observes StartupEvent ev) {
 		log.info("Note Endpoint starting");
-
+		log.info("MySQL Password = "+mysqlPassword);
 		// Creating some test
 		// Fetch the base entities
 		BaseEntity sourceBE = (BaseEntity) em
