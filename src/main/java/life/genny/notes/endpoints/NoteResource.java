@@ -5,6 +5,7 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,7 @@ import io.quarkus.runtime.StartupEvent;
 import io.quarkus.security.identity.SecurityIdentity;
 import life.genny.notes.models.DataTable;
 import life.genny.notes.models.Note;
+import life.genny.notes.models.QNoteMessage;
 import life.genny.notes.models.Tag;
 import life.genny.qwanda.entity.BaseEntity;
 
@@ -59,92 +61,100 @@ public class NoteResource {
 
 	@ConfigProperty(name = "default.realm", defaultValue = "genny")
 	String defaultRealm;
-	
-	
+
 	@Inject
 	SecurityIdentity securityIdentity;
 
 	@Inject
 	EntityManager em;
-	
-    /**
-     * Injection point for the ID Token issued by the OpenID Connect Provider
-     */
-    @Inject
-    @IdToken
-    JsonWebToken idToken;
 
-    /**
-     * Injection point for the Access Token issued by the OpenID Connect Provider
-     */
-    @Inject
-    JsonWebToken accessToken;
+	/**
+	 * Injection point for the ID Token issued by the OpenID Connect Provider
+	 */
+	@Inject
+	@IdToken
+	JsonWebToken idToken;
 
-    /**
-     * Injection point for the Refresh Token issued by the OpenID Connect Provider
-     */
-    @Inject
-    RefreshToken refreshToken;
+	/**
+	 * Injection point for the Access Token issued by the OpenID Connect Provider
+	 */
+	@Inject
+	JsonWebToken accessToken;
 
+	/**
+	 * Injection point for the Refresh Token issued by the OpenID Connect Provider
+	 */
+	@Inject
+	RefreshToken refreshToken;
 
 	@OPTIONS
 	public Response opt() {
 		return Response.ok().build();
 	}
 
-
 	@GET
-	@RolesAllowed({"user"})  
+	// @RolesAllowed({"user"})
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getNotesByTags(
-			@QueryParam("tags") String tags,
-			 @QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
-			    @QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
-		String realm = securityIdentity.getAttribute("aud"); //realm
-		if (realm==null) {
+	public Response getNotesByTags(@QueryParam("tags") String tags,
+			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
+			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
+		String realm = securityIdentity.getAttribute("aud"); // realm
+		if (realm == null) {
 			realm = defaultRealm;
 		}
 
-		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
-		List<Tag> tagList = tagStringList.stream()
-				  .collect(
-				    Collectors.mapping(
-				      p -> new Tag(p),
-				      Collectors.toList()));		
-		List<Note> notes = Note.findByTags(realm,tagList, Page.of(pageIndex, pageSize));
-		if ((notes == null)||(notes.isEmpty())) {
-			notes = new ArrayList<Note>();
+		List<Tag> tagList = null;
+		if (tags != null) {
+			List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
+			tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
+		} else {
+			tagList = new ArrayList<Tag>();
 		}
+		QNoteMessage notes = Note.findByTags(realm, tagList, Page.of(pageIndex, pageSize));
 
+		
 		return Response.status(Status.OK).entity(notes).build();
 	}
-	
 
 	@Transactional
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response newNote(@Context UriInfo uriInfo,@Valid Note note) {
+	public Response newNote(@Context UriInfo uriInfo, @Valid Note note) {
 		note.id = null;
-		
-		String realm = securityIdentity.getAttribute("aud"); //realm
-		if (realm==null) {
+
+		String realm = securityIdentity.getAttribute("aud"); // realm
+		if (realm == null) {
 			realm = defaultRealm;
 		}
+		note.realm = realm;
 		// Fetch the base entities
-		BaseEntity sourceBE = (BaseEntity) em
-				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
-				.setParameter("realmStr", note.realm).setParameter("code", note.sourceCode).getSingleResult();
-		if (sourceBE == null) {
+		BaseEntity sourceBE = null;
+		BaseEntity targetBE = null;
+
+		try {
+			sourceBE = (BaseEntity) em
+					.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
+					.setParameter("realmStr", realm).setParameter("code", note.sourceCode).getSingleResult();
+			if (sourceBE == null) {
+				throw new WebApplicationException("BaseEntity with code " + note.sourceCode + " does not exist.",
+						Status.NOT_FOUND);
+			}
+		} catch (Exception e) {
 			throw new WebApplicationException("BaseEntity with code " + note.sourceCode + " does not exist.",
 					Status.NOT_FOUND);
 		}
 
-		BaseEntity targetBE = (BaseEntity) em
-				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
-				.setParameter("realmStr", note.realm).setParameter("code", note.targetCode).getSingleResult();
+		try {
+			targetBE = (BaseEntity) em
+					.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
+					.setParameter("realmStr", realm).setParameter("code", note.targetCode).getSingleResult();
 
-		if (targetBE == null) {
+			if (targetBE == null) {
+				throw new WebApplicationException("BaseEntity with code " + note.targetCode + " does not exist.",
+						Status.NOT_FOUND);
+			}
+		} catch (Exception e) {
 			throw new WebApplicationException("BaseEntity with code " + note.targetCode + " does not exist.",
 					Status.NOT_FOUND);
 		}
@@ -152,12 +162,9 @@ public class NoteResource {
 		note.setSource(sourceBE);
 		note.setTarget(targetBE);
 		note.persist();
-		
-	      URI uri = uriInfo.getAbsolutePathBuilder()
-	                .path(NoteResource.class)
-	                .path(NoteResource.class, "findById")
-	                .build(note.id);
-	        return Response.created(uri).build();
+
+		URI uri = uriInfo.getAbsolutePathBuilder().path(NoteResource.class, "findById").build(note.id);
+		return Response.created(uri).build();
 	}
 
 	@Path("/id/{id}")
@@ -171,37 +178,28 @@ public class NoteResource {
 
 		return Response.status(Status.OK).entity(note).build();
 	}
-	
-	
+
 	@Path("/{targetCode}")
 	@GET
-	//@RolesAllowed({"Everyone"})  
+	// @RolesAllowed({"Everyone"})
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getNotesByTargetCodeAndTags(@PathParam("targetCode") final String targetCode,
 			@QueryParam("tags") @DefaultValue("") String tags,
-			 @QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
-			    @QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
-	       Object userName = this.idToken.getClaim("preferred_username");
+			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
+			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
+		Object userName = this.idToken.getClaim("preferred_username");
 
-		String realm = securityIdentity.getAttribute("aud"); //realm
-		if (realm==null) {
+		String realm = securityIdentity.getAttribute("aud"); // realm
+		if (realm == null) {
 			realm = defaultRealm;
 		}
 
 		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
-		List<Tag> tagList = tagStringList.stream()
-				  .collect(
-				    Collectors.mapping(
-				      p -> new Tag(p),
-				      Collectors.toList()));		
-		List<Note> notes = Note.findByTargetAndTags(realm,tagList,targetCode, Page.of(pageIndex, pageSize));
-		if ((notes == null)||(notes.isEmpty())) {
-			notes = new ArrayList<Note>();
-		}
+		List<Tag> tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
+		QNoteMessage notes  = Note.findByTargetAndTags(realm, tagList, targetCode, Page.of(pageIndex, pageSize));
 
 		return Response.status(Status.OK).entity(notes).build();
 	}
-
 
 	@Path("{id}")
 	@PUT
@@ -222,10 +220,10 @@ public class NoteResource {
 	@Path("{id}")
 	@DELETE
 	public Response deleteNote(@PathParam("id") final String id) {
-        Note n = Note.findById(id);
-        if(n == null)
-            throw new WebApplicationException(Status.NOT_FOUND);
- 
+		Note n = Note.findById(id);
+		if (n == null)
+			throw new WebApplicationException(Status.NOT_FOUND);
+
 		Note.deleteById(id);
 		return Response.status(Status.OK).build();
 	}
@@ -237,10 +235,10 @@ public class NoteResource {
 			@QueryParam(value = "length") int length, @QueryParam(value = "search[value]") String searchVal
 
 	) {
-	       Object userName = this.idToken.getClaim("preferred_username");
+		Object userName = this.idToken.getClaim("preferred_username");
 
-		log.info("User name is "+idToken.getName());
-		log.info("Ideentity is "+this.securityIdentity.getAttribute("preferred_username"));
+		log.info("User name is " + idToken.getName());
+		log.info("Ideentity is " + this.securityIdentity.getAttribute("preferred_username"));
 
 		searchVal = "";
 		life.genny.notes.models.DataTable<Note> result = new DataTable<>();
@@ -253,7 +251,7 @@ public class NoteResource {
 		} else {
 			filteredDevice = Note.findAll();
 		}
-		
+
 		int page_number = 0;
 		if (length > 0) {
 			page_number = start / length;
@@ -281,25 +279,18 @@ public class NoteResource {
 				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
 				.setParameter("realmStr", "internmatch").setParameter("code", "PER_USER1").getSingleResult();
 
-
 		if (sourceBE != null) {
 
 			if (Note.count() == 0) {
-				
-				 List<Tag> tags1 = Arrays.asList(
-			                new Tag("phone", 1),
-			                new Tag("intern", 3)
-			        );
 
-				 List<Tag> tags2 = Arrays.asList(
-			                new Tag("intern", 1),
-			                new Tag("rating", 5)
-			        );
+				List<Tag> tags1 = Arrays.asList(new Tag("phone", 1), new Tag("intern", 3));
 
-				Note test1 = new Note(defaultRealm, sourceBE, sourceBE, tags1,"This is the first note!");
+				List<Tag> tags2 = Arrays.asList(new Tag("intern", 1), new Tag("rating", 5));
+
+				Note test1 = new Note(defaultRealm, sourceBE, sourceBE, tags1, "This is the first note!");
 				test1.persist();
 
-				Note test2 = new Note(defaultRealm, sourceBE, sourceBE, tags2,"This is the second note!");
+				Note test2 = new Note(defaultRealm, sourceBE, sourceBE, tags2, "This is the second note!");
 				test2.persist();
 			}
 		} else {

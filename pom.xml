@@ -84,6 +84,11 @@
 		</dependency>
 		<dependency>
 			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-jackson</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.quarkus</groupId>
 			<artifactId>quarkus-smallrye-openapi</artifactId>
 		</dependency>
 		<dependency>
@@ -102,10 +107,8 @@
 			<groupId>io.quarkus</groupId>
 			<artifactId>quarkus-hibernate-orm-panache</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>io.quarkus</groupId>
-			<artifactId>quarkus-hibernate-search-elasticsearch</artifactId>
-		</dependency>
+		<!-- <dependency> <groupId>io.quarkus</groupId> <artifactId>quarkus-hibernate-search-elasticsearch</artifactId> 
+			</dependency> -->
 		<dependency>
 			<groupId>io.quarkus</groupId>
 			<artifactId>quarkus-resteasy-jackson</artifactId>
@@ -148,12 +151,7 @@
 			<version>${testcontainers.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 -->
-		<dependency>
-			<groupId>com.fasterxml.jackson.datatype</groupId>
-			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>${version.jackson-datatype-jsr310}</version>
-		</dependency>
+
 
 	</dependencies>
 	<build>
@@ -474,51 +472,18 @@
 					<name>m2e.version</name>
 				</property>
 			</activation>
-			<build>
-				<pluginManagement>
-					<plugins>
-						<plugin>
-							<groupId>org.eclipse.m2e</groupId>
-							<artifactId>lifecycle-mapping</artifactId>
-							<version>1.0.0</version>
-							<configuration>
-								<lifecycleMappingMetadata>
-									<pluginExecutions>
-										<pluginExecution>
-											<pluginExecutionFilter>
-												<groupId>io.fabric8</groupId>
-												<artifactId>docker-maven-plugin</artifactId>
-												<versionRange>[0.32.0,)</versionRange>
-												<goals>
-													<goal>start</goal>
-													<goal>stop</goal>
-												</goals>
-											</pluginExecutionFilter>
-											<action>
-												<ignore></ignore>
-											</action>
-										</pluginExecution>
-										<pluginExecution>
-											<pluginExecutionFilter>
-												<groupId>com.github.alexcojocaru</groupId>
-												<artifactId>elasticsearch-maven-plugin</artifactId>
-												<versionRange>[${elasticsearch-maven-plugin.version},)</versionRange>
-												<goals>
-													<goal>runforked</goal>
-													<goal>stop</goal>
-												</goals>
-											</pluginExecutionFilter>
-											<action>
-												<ignore></ignore>
-											</action>
-										</pluginExecution>
-									</pluginExecutions>
-								</lifecycleMappingMetadata>
-							</configuration>
-						</plugin>
-					</plugins>
-				</pluginManagement>
-			</build>
+			<!-- <build> <pluginManagement> <plugins> <plugin> <groupId>org.eclipse.m2e</groupId> 
+				<artifactId>lifecycle-mapping</artifactId> <version>1.0.0</version> <configuration> 
+				<lifecycleMappingMetadata> <pluginExecutions> <pluginExecution> <pluginExecutionFilter> 
+				<groupId>io.fabric8</groupId> <artifactId>docker-maven-plugin</artifactId> 
+				<versionRange>[0.32.0,)</versionRange> <goals> <goal>start</goal> <goal>stop</goal> 
+				</goals> </pluginExecutionFilter> <action> <ignore></ignore> </action> </pluginExecution> 
+				<pluginExecution> <pluginExecutionFilter> <groupId>com.github.alexcojocaru</groupId> 
+				<artifactId>elasticsearch-maven-plugin</artifactId> <versionRange>[${elasticsearch-maven-plugin.version},)</versionRange> 
+				<goals> <goal>runforked</goal> <goal>stop</goal> </goals> </pluginExecutionFilter> 
+				<action> <ignore></ignore> </action> </pluginExecution> </pluginExecutions> 
+				</lifecycleMappingMetadata> </configuration> </plugin> </plugins> </pluginManagement> 
+				</build> -->
 		</profile>
 	</profiles>
 </project>

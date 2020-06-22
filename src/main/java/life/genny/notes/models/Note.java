@@ -3,12 +3,12 @@ package life.genny.notes.models;
 import java.lang.invoke.MethodHandles;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.annotation.JsonbTypeAdapter;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -18,17 +18,18 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+//import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+//import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
+import io.quarkus.runtime.annotations.RegisterForReflection;
+import life.genny.notes.utils.LocalDateTimeAdapter;
 import life.genny.qwanda.entity.BaseEntity;
 
 /*
@@ -37,23 +38,20 @@ import life.genny.qwanda.entity.BaseEntity;
 * @since       1.0
 */
 @Entity
-@Indexed
+//@Indexed
 @Table(name = "note")
+@RegisterForReflection
 public class Note extends PanacheEntity {
 
 	private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getCanonicalName());
 	public static final String DEFAULT_TAG = "default";
-	protected final static String DATE_FORMAT_STR_ISO8601 = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+	protected final static String DATE_FORMAT_STR_ISO8601 = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
-	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", shape = JsonFormat.Shape.STRING)
-	//@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DATE_FORMAT_STR_ISO8601)
-	//@JsonSerialize(using = DateTimeDeserializer.class)
+	@JsonbTypeAdapter(LocalDateTimeAdapter.class)
 	public LocalDateTime created = LocalDateTime.now(ZoneId.of("UTC"));
-
-	//@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", shape = JsonFormat.Shape.STRING)
-	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", shape = JsonFormat.Shape.STRING)
+	@JsonbTypeAdapter(LocalDateTimeAdapter.class)
 	public LocalDateTime updated;
-
+	// public Date updated = new Date();
 	@ElementCollection
 	public List<Tag> tags = new ArrayList<>();
 
@@ -61,7 +59,7 @@ public class Note extends PanacheEntity {
 	@JsonbTransient
 	public String realm;
 
-	@FullTextField(analyzer = "english")
+	// @FullTextField(analyzer = "english")
 	@Column(name = "content")
 	@NotEmpty
 	public String content;
@@ -92,8 +90,8 @@ public class Note extends PanacheEntity {
 
 	public Note(final String realm, final BaseEntity sourceBE, final BaseEntity targetBE, final List<Tag> tags,
 			final String content) {
-		this.created = LocalDateTime.now(ZoneId.of("UTC"));
-		this.updated = LocalDateTime.now(ZoneId.of("UTC"));
+		// this.created = LocalDateTime.now(ZoneId.of("UTC"));
+		// this.updated = LocalDateTime.now(ZoneId.of("UTC"));
 		this.realm = realm;
 		this.content = content;
 //		if (tags.isEmpty()) {
@@ -142,38 +140,64 @@ public class Note extends PanacheEntity {
 		return delete("id", id);
 	}
 
-	public static List<Note> findByTags(final String realm, final List<Tag> tags, Page page) {
+	public static QNoteMessage findByTags(final String realm, final List<Tag> tags, Page page) {
 		List<String> tagStringList = tags.stream().collect(Collectors.mapping(p -> p.getName(), Collectors.toList()));
 
-		// PanacheQuery<Note> notes = Note.find("select n from Note n JOIN n.tags t
-		// where n.realm = ?1 and t.name in (?2) order by n.created", realm,tags);
-		PanacheQuery<Note> notes = Note.find(
-				"select n from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags) order by n.created",
-				Parameters.with("realm", realm).and("tags", tagStringList));
+		PanacheQuery<Note> notes = null;
+		Long total = 0L;
+		if (!tagStringList.isEmpty()) {
+			notes = Note.find(
+					"select n from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags)  order by n.created",
+					Parameters.with("realm", realm).and("tags", tagStringList));
+			
+			if (notes.count()>0 ) {
+				total = Note.count("from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags)",
+						Parameters.with("realm", realm).and("tags", tagStringList));
+			}
+		} else {
+			notes = Note.find("select n from Note n  where n.realm = :realm  order by n.created",
+					Parameters.with("realm", realm));
+			if (notes.count()>0 ) {
+				total = Note.count("realm",realm);
+			}
 
-		return notes.page(page).list();
+		}		
+		
+		QNoteMessage noteMsg = new QNoteMessage( notes.page(page).list(),total);
+		return noteMsg;
 	}
 
-	public static List<Note> findByTargetAndTags(String realm, final List<Tag> tags, final String targetCode,
+	public static QNoteMessage findByTargetAndTags(String realm, final List<Tag> tags, final String targetCode,
 			Page page) {
 		List<String> tagStringList = tags.stream().collect(Collectors.mapping(p -> p.getName(), Collectors.toList()));
 
 		PanacheQuery<Note> notes = null;
-//		PanacheQuery<Note> notes = Note.find("select n from Note n JOIN n.tags t where n.realm = ?1 and t.name in (?2) and n.targetCode = ?3  order by n.created", realm,tagStringList,targetCode);
-		
-//		if (!tagStringList.isEmpty()) {
-//			tagStringList.add(DEFAULT_TAG);
-//		}
+		Long total = 0L;
+
+
 		if (!tagStringList.isEmpty()) {
 			notes = Note.find(
 					"select n from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags) and n.targetCode = :targetCode  order by n.created",
 					Parameters.with("realm", realm).and("targetCode", targetCode).and("tags", tagStringList));
+			if (notes.count()>0 ) {
+				total = Note.count("from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags) and n.targetCode = :targetCode ",
+						Parameters.with("realm", realm).and("targetCode", targetCode).and("tags", tagStringList));
+			}
+
 		} else {
 			notes = Note.find(
 					"select n from Note n  where n.realm = :realm  and n.targetCode = :targetCode  order by n.created",
 					Parameters.with("realm", realm).and("targetCode", targetCode));
+			if (notes.count()>0 ) {
+				total = Note.count("realm = :realm  and targetCode = :targetCode",
+						Parameters.with("realm", realm).and("targetCode", targetCode));
+			}
+
 		}
-		return notes.page(page).list();
+		
+		QNoteMessage noteMsg = new QNoteMessage( notes.page(page).list(),total);
+		return noteMsg;
+
 
 	}
 }
