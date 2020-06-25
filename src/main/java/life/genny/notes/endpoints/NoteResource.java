@@ -175,7 +175,7 @@ public class NoteResource {
 	@Path("/id/{id}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response findById(@PathParam("id") final String id) {
+	public Response findById(@PathParam("id") final Long id) {
 		Note note = Note.findById(id);
 		if (note == null) {
 			throw new WebApplicationException("Note with id of " + id + " does not exist.", Status.NOT_FOUND);
@@ -187,7 +187,6 @@ public class NoteResource {
 	@Path("/{targetCode}")
 	@GET
 	// @RolesAllowed({"Everyone"})
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response getNotesByTargetCodeAndTags(@PathParam("targetCode") final String targetCode,
 			@QueryParam("tags") @DefaultValue("") String tags,
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
@@ -209,7 +208,7 @@ public class NoteResource {
 	@Path("{id}")
 	@PUT
 	@Transactional
-	public Response updateNote(@PathParam("id") final String id, @Valid Note note) {
+	public Response updateNote(@PathParam("id") final Long id, @Valid Note note) {
 		Note existed = Note.findById(id);
 		if (note == null) {
 			throw new WebApplicationException("Note with id of " + id + " does not exist.", Status.NOT_FOUND);
