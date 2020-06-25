@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.security.RolesAllowed;
 import javax.enterprise.event.Observes;
@@ -206,7 +208,7 @@ public class NoteResource {
 
 	@Path("{id}")
 	@PUT
-	@Consumes(MediaType.APPLICATION_JSON)
+	@Transactional
 	public Response updateNote(@PathParam("id") final String id, @Valid Note note) {
 		Note existed = Note.findById(id);
 		if (note == null) {
@@ -222,11 +224,12 @@ public class NoteResource {
 
 	@Path("{id}")
 	@DELETE
-	public Response deleteNote(@PathParam("id") final String id) {
+	@Transactional
+	public Response deleteNote(@PathParam("id") final Long id) {
 		Note n = Note.findById(id);
 		if (n == null)
 			throw new WebApplicationException(Status.NOT_FOUND);
-
+		
 		Note.deleteById(id);
 		return Response.status(Status.OK).build();
 	}
@@ -286,9 +289,9 @@ public class NoteResource {
 
 			if (Note.count() == 0) {
 
-				List<Tag> tags1 = Arrays.asList(new Tag("phone", 1), new Tag("intern", 3));
+				Set<Tag> tags1 = Stream.of(new Tag("phone", 1), new Tag("intern", 3)).collect(Collectors.toSet());
 
-				List<Tag> tags2 = Arrays.asList(new Tag("intern", 1), new Tag("rating", 5));
+				Set<Tag> tags2 = Stream.of(new Tag("intern", 1), new Tag("rating", 5)).collect(Collectors.toSet());
 
 				Note test1 = new Note(defaultRealm, sourceBE, sourceBE, tags1, "This is the first note!");
 				test1.persist();

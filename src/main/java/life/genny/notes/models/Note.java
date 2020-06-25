@@ -4,11 +4,14 @@ import java.lang.invoke.MethodHandles;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.annotation.JsonbTypeAdapter;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -18,6 +21,8 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 //import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 //import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.jboss.logging.Logger;
@@ -50,7 +55,11 @@ public class Note extends PanacheEntity {
 	public LocalDateTime updated;
 	// public Date updated = new Date();
 	@ElementCollection
-	public List<Tag> tags = new ArrayList<>();
+	@Column(name = "note_tag")
+    @CollectionTable(name = "tag")
+	@JoinColumn(name = "note_id")
+	@OnDelete(action= OnDeleteAction.CASCADE)
+	public Set<Tag> tags = new HashSet<>();
 
 	@NotEmpty
 	@JsonbTransient
@@ -85,7 +94,7 @@ public class Note extends PanacheEntity {
 	public Note() {
 	}
 
-	public Note(final String realm, final BaseEntity sourceBE, final BaseEntity targetBE, final List<Tag> tags,
+	public Note(final String realm, final BaseEntity sourceBE, final BaseEntity targetBE, final Set<Tag> tags,
 			final String content) {
 		// this.created = LocalDateTime.now(ZoneId.of("UTC"));
 		// this.updated = LocalDateTime.now(ZoneId.of("UTC"));
