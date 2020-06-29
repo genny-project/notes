@@ -1,5 +1,6 @@
 #!/bin/bash
-project=notes
+version=$(prop 'git.build.version')
+project=${PWD##*/}
 file="src/main/resources/notes-git.properties"
 
 function prop() {

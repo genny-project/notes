@@ -1,6 +1,5 @@
 package life.genny.notes.utils;
 
-import java.io.StringReader;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -8,16 +7,16 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
 import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.json.bind.adapter.JsonbAdapter;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
+@RegisterForReflection
 public class LocalDateTimeAdapter implements JsonbAdapter<LocalDateTime, JsonValue> {
 	 private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 	 
-
+	 public LocalDateTimeAdapter() {}
 
 	@Override
 	public JsonValue adaptToJson(LocalDateTime obj) throws Exception {
@@ -26,10 +25,7 @@ public class LocalDateTimeAdapter implements JsonbAdapter<LocalDateTime, JsonVal
 		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateTimePattern);
 		String localDateTimeStr = obj.format(dateFormatter);
 		return Json.createValue(localDateTimeStr);
-		//JsonObject jsonObject = new JsonObject(localDateStr);
-//	    JsonReader jsonReader = Json.createReader(new StringReader(localDateTimeStr));
-//	    JsonObject reply = jsonReader.readObject();
-//		return reply;
+
 	}
 
 	@Override

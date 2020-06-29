@@ -1,8 +1,15 @@
 #!/bin/bash
-version=3.1.0
-#./mvnw clean package -Pnative -Dnative-image.docker-build=true
+
+version=7.0.0  #$(grep 'git.build.version')
+pwd=${PWD##*/}
+function prop() {
+  grep "${1}=" ${file} | cut -d'=' -f2
+}
+
+
+echo "Building docker gennyproject/${pwd}:${version}"
 pushd $PWD
 ./mvnw clean package -Dquarkus.container-image.build=true -DskipTests=true
-docker tag ${USER}/notes:${version}  gennyproject/notes:latest 
-docker tag ${USER}/notes:${version}  gennyproject/notes:${version} 
+docker tag ${USER}/${pwd}:${version}  gennyproject/${pwd}:latest 
+docker tag ${USER}/${pwd}:${version}  gennyproject/${pwd}:${version} 
 popd

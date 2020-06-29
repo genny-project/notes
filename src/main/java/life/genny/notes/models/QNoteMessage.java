@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
+@RegisterForReflection
 public class QNoteMessage implements Serializable{
 
 	/**
@@ -16,6 +19,8 @@ public class QNoteMessage implements Serializable{
 	 * @param items
 	 * @param total
 	 */
+	public QNoteMessage() {}
+	
 	public QNoteMessage(List<Note> items, Long total) {
 		if ((items == null) || (items.isEmpty())) {
 			items = new ArrayList<Note>();

@@ -1,20 +1,14 @@
 package life.genny.notes.endpoints;
 
-import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import javax.annotation.security.RolesAllowed;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -41,56 +35,35 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.oidc.IdToken;
-import io.quarkus.oidc.RefreshToken;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.security.identity.SecurityIdentity;
 import life.genny.notes.models.DataTable;
+import life.genny.notes.models.GennyToken;
 import life.genny.notes.models.Note;
 import life.genny.notes.models.QNoteMessage;
 import life.genny.notes.models.Tag;
-import life.genny.qwanda.entity.BaseEntity;
+
 
 @Path("/v7/notes")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class NoteResource {
 
-	private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getCanonicalName());
+	private static final Logger log = Logger.getLogger(Note.class);
 
 	@ConfigProperty(name = "default.realm", defaultValue = "genny")
 	String defaultRealm;
 
-	@ConfigProperty(name = "quarkus.datasource.password")
-	String mysqlPassword;
-	
+
 	@Inject
 	SecurityIdentity securityIdentity;
 
-	@Inject
-	EntityManager em;
 
-	/**
-	 * Injection point for the ID Token issued by the OpenID Connect Provider
-	 */
 	@Inject
-	@IdToken
-	JsonWebToken idToken;
-
-	/**
-	 * Injection point for the Access Token issued by the OpenID Connect Provider
-	 */
-	@Inject
-	JsonWebToken accessToken;
-
-	/**
-	 * Injection point for the Refresh Token issued by the OpenID Connect Provider
-	 */
-	@Inject
-	RefreshToken refreshToken;
+	JsonWebToken accessToken2;
 
 	@OPTIONS
 	public Response opt() {
@@ -98,15 +71,14 @@ public class NoteResource {
 	}
 
 	@GET
-	// @RolesAllowed({"user"})
+	// @RolesAllowed({"admin"})
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getNotesByTags(@QueryParam("tags") String tags,
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
 			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
-		String realm = securityIdentity.getAttribute("aud"); // realm
-		if (realm == null) {
-			realm = defaultRealm;
-		}
+
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
 
 		List<Tag> tagList = null;
 		if (tags != null) {
@@ -115,9 +87,8 @@ public class NoteResource {
 		} else {
 			tagList = new ArrayList<Tag>();
 		}
-		QNoteMessage notes = Note.findByTags(realm, tagList, Page.of(pageIndex, pageSize));
+		QNoteMessage notes = Note.findByTags(userToken, tagList, Page.of(pageIndex, pageSize));
 
-		
 		return Response.status(Status.OK).entity(notes).build();
 	}
 
@@ -127,46 +98,47 @@ public class NoteResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response newNote(@Context UriInfo uriInfo, @Valid Note note) {
 		note.id = null;
-
-		String realm = securityIdentity.getAttribute("aud"); // realm
-		if (realm == null) {
-			realm = defaultRealm;
-		}
-		note.realm = realm;
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
+		note.realm = userToken.getRealm();
+		note.sourceCode = userToken.getUserCode(); // force
 		// Fetch the base entities
-		BaseEntity sourceBE = null;
-		BaseEntity targetBE = null;
-
-		try {
-			sourceBE = (BaseEntity) em
-					.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
-					.setParameter("realmStr", realm).setParameter("code", note.sourceCode).getSingleResult();
-			if (sourceBE == null) {
-				throw new WebApplicationException("BaseEntity with code " + note.sourceCode + " does not exist.",
-						Status.NOT_FOUND);
-			}
-		} catch (Exception e) {
-			throw new WebApplicationException("BaseEntity with code " + note.sourceCode + " does not exist.",
-					Status.NOT_FOUND);
-		}
-
-		try {
-			targetBE = (BaseEntity) em
-					.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
-					.setParameter("realmStr", realm).setParameter("code", note.targetCode).getSingleResult();
-
-			if (targetBE == null) {
-				throw new WebApplicationException("BaseEntity with code " + note.targetCode + " does not exist.",
-						Status.NOT_FOUND);
-			}
-		} catch (Exception e) {
-			throw new WebApplicationException("BaseEntity with code " + note.targetCode + " does not exist.",
-					Status.NOT_FOUND);
-		}
-
-		note.setSource(sourceBE);
-		note.setTarget(targetBE);
+//		BaseEntity sourceBE = null;
+//		BaseEntity targetBE = null;
+//
+//		try {
+//			sourceBE = (BaseEntity) em
+//					.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
+//					.setParameter("realmStr", realm).setParameter("code", note.sourceCode).getSingleResult();
+//			if (sourceBE == null) {
+//				throw new WebApplicationException("BaseEntity with code " + note.sourceCode + " does not exist.",
+//						Status.NOT_FOUND);
+//			}
+//		} catch (Exception e) {
+//			throw new WebApplicationException("BaseEntity with code " + note.sourceCode + " does not exist.",
+//					Status.NOT_FOUND);
+//		}
+//
+//		try {
+//			targetBE = (BaseEntity) em
+//					.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
+//					.setParameter("realmStr", realm).setParameter("code", note.targetCode).getSingleResult();
+//
+//			if (targetBE == null) {
+//				throw new WebApplicationException("BaseEntity with code " + note.targetCode + " does not exist.",
+//						Status.NOT_FOUND);
+//			}
+//		} catch (Exception e) {
+//			throw new WebApplicationException("BaseEntity with code " + note.targetCode + " does not exist.",
+//					Status.NOT_FOUND);
+//		}
+//
+//		note.setSource(sourceBE);
+//		note.setTarget(targetBE);
 		note.persist();
+		
+		QNoteMessage msg = new QNoteMessage();
+	//	WriteToBridge.writeMessage("https://internmatch-dev1.gada.io/api/service",msg,userToken);
 
 		URI uri = uriInfo.getAbsolutePathBuilder().path(NoteResource.class, "findById").build(note.id);
 		return Response.created(uri).build();
@@ -176,11 +148,18 @@ public class NoteResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response findById(@PathParam("id") final Long id) {
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
+
 		Note note = Note.findById(id);
 		if (note == null) {
 			throw new WebApplicationException("Note with id of " + id + " does not exist.", Status.NOT_FOUND);
 		}
-
+		if (note.realm != userToken.getRealm()) {
+			throw new WebApplicationException(
+					"Note with id of " + id + " does not exist in your realm ." + userToken.getRealm(),
+					Status.NOT_FOUND);
+		}
 		return Response.status(Status.OK).entity(note).build();
 	}
 
@@ -191,16 +170,15 @@ public class NoteResource {
 			@QueryParam("tags") @DefaultValue("") String tags,
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
 			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
-		Object userName = this.idToken.getClaim("preferred_username");
+		// Object userName = this.idToken.getClaim("preferred_username");
 
-		String realm = securityIdentity.getAttribute("aud"); // realm
-		if (realm == null) {
-			realm = defaultRealm;
-		}
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
 
 		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
 		List<Tag> tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
-		QNoteMessage notes  = Note.findByTargetAndTags(realm, tagList, targetCode, Page.of(pageIndex, pageSize));
+		QNoteMessage notes = Note.findByTargetAndTags(userToken, tagList, targetCode,
+				Page.of(pageIndex, pageSize));
 
 		return Response.status(Status.OK).entity(notes).build();
 	}
@@ -209,9 +187,17 @@ public class NoteResource {
 	@PUT
 	@Transactional
 	public Response updateNote(@PathParam("id") final Long id, @Valid Note note) {
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
+
 		Note existed = Note.findById(id);
-		if (note == null) {
+		if (existed == null) {
 			throw new WebApplicationException("Note with id of " + id + " does not exist.", Status.NOT_FOUND);
+		}
+		if (existed.realm != userToken.getRealm()) {
+			throw new WebApplicationException(
+					"Note with id of " + id + " does not exist in your realm ." + userToken.getRealm(),
+					Status.NOT_FOUND);
 		}
 
 		existed.content = note.content;
@@ -225,11 +211,25 @@ public class NoteResource {
 	@DELETE
 	@Transactional
 	public Response deleteNote(@PathParam("id") final Long id) {
-		Note n = Note.findById(id);
-		if (n == null)
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
+
+		Note existed = Note.findById(id);
+		if (existed == null) {
 			throw new WebApplicationException(Status.NOT_FOUND);
-		
-		Note.deleteById(id);
+		}
+
+		if (existed.realm != userToken.getRealm()) {
+			throw new WebApplicationException(
+					"Note with id of " + id + " does not exist in your realm ." + userToken.getRealm(),
+					Status.NOT_FOUND);
+		}
+		if (userToken.hasRole("admin")) {
+			Note.deleteById(id);
+		} else {
+			throw new WebApplicationException("You do not have permission to delete this note", Status.FORBIDDEN);
+
+		}
 		return Response.status(Status.OK).build();
 	}
 
@@ -240,36 +240,37 @@ public class NoteResource {
 			@QueryParam(value = "length") int length, @QueryParam(value = "search[value]") String searchVal
 
 	) {
-		Object userName = this.idToken.getClaim("preferred_username");
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
 
-		log.info("User name is " + idToken.getName());
-		log.info("Ideentity is " + this.securityIdentity.getAttribute("preferred_username"));
-
-		searchVal = "";
 		life.genny.notes.models.DataTable<Note> result = new DataTable<>();
-		result.setDraw(draw);
+		if (userToken.hasRole("admin")) {
 
-		PanacheQuery<Note> filteredDevice;
+			searchVal = "";
+			result.setDraw(draw);
 
-		if (searchVal != null && !searchVal.isEmpty()) {
-			filteredDevice = Note.<Note>find("content like :search", Parameters.with("search", "%" + searchVal + "%"));
-		} else {
-			filteredDevice = Note.findAll();
+			PanacheQuery<Note> filteredDevice;
+
+			if (searchVal != null && !searchVal.isEmpty()) {
+				filteredDevice = Note.<Note>find("content like :search",
+						Parameters.with("search", "%" + searchVal + "%"));
+			} else {
+				filteredDevice = Note.findAll();
+			}
+
+			int page_number = 0;
+			if (length > 0) {
+				page_number = start / length;
+			}
+			filteredDevice.page(page_number, length);
+
+			log.info("/datatable: search=[" + searchVal + "],start=" + start + ",length=" + length + ",result#="
+					+ filteredDevice.count());
+
+			result.setRecordsFiltered(filteredDevice.count());
+			result.setData(filteredDevice.list());
+			result.setRecordsTotal(Note.count());
 		}
-
-		int page_number = 0;
-		if (length > 0) {
-			page_number = start / length;
-		}
-		filteredDevice.page(page_number, length);
-
-		log.info("/datatable: search=[" + searchVal + "],start=" + start + ",length=" + length + ",result#="
-				+ filteredDevice.count());
-
-		result.setRecordsFiltered(filteredDevice.count());
-		result.setData(filteredDevice.list());
-		result.setRecordsTotal(Note.count());
-
 		return result;
 
 	}
@@ -277,30 +278,30 @@ public class NoteResource {
 	@Transactional
 	void onStart(@Observes StartupEvent ev) {
 		log.info("Note Endpoint starting");
-		log.info("MySQL Password = "+mysqlPassword);
+	//	log.info("MySQL Password = " + mysqlPassword);
 		// Creating some test
 		// Fetch the base entities
-		BaseEntity sourceBE = (BaseEntity) em
-				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
-				.setParameter("realmStr", "internmatch").setParameter("code", "PER_USER1").getSingleResult();
-
-		if (sourceBE != null) {
-
-			if (Note.count() == 0) {
-
-				Set<Tag> tags1 = Stream.of(new Tag("phone", 1), new Tag("intern", 3)).collect(Collectors.toSet());
-
-				Set<Tag> tags2 = Stream.of(new Tag("intern", 1), new Tag("rating", 5)).collect(Collectors.toSet());
-
-				Note test1 = new Note(defaultRealm, sourceBE, sourceBE, tags1, "This is the first note!");
-				test1.persist();
-
-				Note test2 = new Note(defaultRealm, sourceBE, sourceBE, tags2, "This is the second note!");
-				test2.persist();
-			}
-		} else {
-			log.error("No Baseentitys set up yet in Database");
-		}
+//		BaseEntity sourceBE = (BaseEntity) em
+//				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
+//				.setParameter("realmStr", "internmatch").setParameter("code", "PER_USER1").getSingleResult();
+//
+//		if (sourceBE != null) {
+//
+//			if (Note.count() == 0) {
+//
+//				Set<Tag> tags1 = Stream.of(new Tag("phone", 1), new Tag("intern", 3)).collect(Collectors.toSet());
+//
+//				Set<Tag> tags2 = Stream.of(new Tag("intern", 1), new Tag("rating", 5)).collect(Collectors.toSet());
+//
+//				Note test1 = new Note(defaultRealm, sourceBE, sourceBE, tags1, "This is the first note!");
+//				test1.persist();
+//
+//				Note test2 = new Note(defaultRealm, sourceBE, sourceBE, tags2, "This is the second note!");
+//				test2.persist();
+//			}
+//		} else {
+//			log.error("No Baseentitys set up yet in Database");
+//		}
 
 	}
 
