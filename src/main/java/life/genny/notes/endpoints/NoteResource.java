@@ -224,7 +224,7 @@ public class NoteResource {
 					"Note with id of " + id + " does not exist in your realm ." + userToken.getRealm(),
 					Status.NOT_FOUND);
 		}
-		if (userToken.hasRole("admin")) {
+		if ((userToken.hasRole("admin"))||(userToken.getUserCode().equals(existed.sourceCode))) {
 			Note.deleteById(id);
 		} else {
 			throw new WebApplicationException("You do not have permission to delete this note", Status.FORBIDDEN);
