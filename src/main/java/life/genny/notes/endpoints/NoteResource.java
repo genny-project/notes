@@ -218,12 +218,12 @@ public class NoteResource {
 		if (existed == null) {
 			throw new WebApplicationException(Status.NOT_FOUND);
 		}
-
-		if (existed.realm != userToken.getRealm()) {
-			throw new WebApplicationException(
-					"Note with id of " + id + " does not exist in your realm ." + userToken.getRealm(),
-					Status.NOT_FOUND);
-		}
+		log.info("Existing realm = ["+existed.realm+"] , userToken realm = ["+userToken.getRealm()+"]");
+//		if (existed.realm != userToken.getRealm()) {
+//			throw new WebApplicationException(
+//					"Note with id of " + id + " does not exist in your realm " + userToken.getRealm(),
+//					Status.NOT_FOUND);
+//		}
 		if ((userToken.hasRole("admin"))||(userToken.getUserCode().equals(existed.sourceCode))) {
 			Note.deleteById(id);
 		} else {
