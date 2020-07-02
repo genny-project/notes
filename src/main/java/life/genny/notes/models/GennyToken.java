@@ -19,6 +19,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.persistence.Transient;
@@ -26,6 +28,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 import org.jose4j.json.JsonUtil;
 import org.jose4j.lang.JoseException;
@@ -36,12 +39,17 @@ import life.genny.notes.utils.SecurityUtils;
 
 
 @RegisterForReflection
+@RequestScoped
 public class GennyToken implements Serializable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private static final Logger log = Logger.getLogger(Note.class);	
+	private static final Logger log = Logger.getLogger(GennyToken.class);	
+
+	
+	@Inject
+	JsonWebToken accessToken;
 
 
 	String code;
@@ -51,36 +59,15 @@ public class GennyToken implements Serializable {
 	String realm = null;
 	Set<String> userRoles = new HashSet<String>();
 
+	
+	public GennyToken()
+	{
+		String token = accessToken.getRawToken();
+		processToken(token);
+	}
+	
 	public GennyToken(final String token) {
-		if ((token != null) && (!token.isEmpty())) {
-			// Getting decoded token in Hash Map from QwandaUtils
-			adecodedTokenMap = getDecodedToken(token);
-			if (adecodedTokenMap == null) {
-				log.error("Token is not able to be decoded in GennyToken ..");
-			} else {
-
-				// Extracting realm name from iss value
-				
-				String iss = adecodedTokenMap.get("iss").toString();
-				String realm = StringUtils.substringAfterLast(iss, "/");
-				if(realm == null) {
-					realm = (adecodedTokenMap.get("aud").toString()); // handle non Keycloak 6+
-				}
-
-				// Adding realm name to the decoded token
-				adecodedTokenMap.put("realm", realm);
-				this.token = token;
-				this.realm = realm;
-				String username = (String) adecodedTokenMap.get("preferred_username");
-				String normalisedUsername = getNormalisedUsername(username);
-				this.userCode = "PER_" + normalisedUsername.toUpperCase();
-
-				setupRoles();
-			}
-
-		} else {
-			log.error("Token is null or zero length in GennyToken ..");
-		}
+		processToken(token);
 
 	}
 
@@ -383,5 +370,38 @@ public class GennyToken implements Serializable {
 				e.printStackTrace();
 			}
 		return json;
+	}
+	
+	private void processToken(final String token)
+	{
+		if ((token != null) && (!token.isEmpty())) {
+			// Getting decoded token in Hash Map from QwandaUtils
+			adecodedTokenMap = getDecodedToken(token);
+			if (adecodedTokenMap == null) {
+				log.error("Token is not able to be decoded in GennyToken ..");
+			} else {
+
+				// Extracting realm name from iss value
+				
+				String iss = adecodedTokenMap.get("iss").toString();
+				String realm = StringUtils.substringAfterLast(iss, "/");
+				if(realm == null) {
+					realm = (adecodedTokenMap.get("aud").toString()); // handle non Keycloak 6+
+				}
+
+				// Adding realm name to the decoded token
+				adecodedTokenMap.put("realm", realm);
+				this.token = token;
+				this.realm = realm;
+				String username = (String) adecodedTokenMap.get("preferred_username");
+				String normalisedUsername = getNormalisedUsername(username);
+				this.userCode = "PER_" + normalisedUsername.toUpperCase();
+
+				setupRoles();
+			}
+
+		} else {
+			log.error("Token is null or zero length in GennyToken ..");
+		}		
 	}
 }

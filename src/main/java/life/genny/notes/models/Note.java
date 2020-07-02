@@ -60,6 +60,7 @@ public class Note extends PanacheEntity {
 	@OnDelete(action= OnDeleteAction.CASCADE)
 	public Set<Tag> tags = new HashSet<>();
 
+	
 	@NotEmpty
 	public String sourceCode;
 

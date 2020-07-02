@@ -22,6 +22,7 @@
 		<qwanda.version>${project.version}</qwanda.version>
 		<surefire.version>2.22.0</surefire.version>
 		<testcontainers.version>1.14.1</testcontainers.version>
+		<jandex.version>1.0.7</jandex.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -217,6 +218,19 @@
 					<execution>
 						<goals>
 							<goal>build</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.jboss.jandex</groupId>
+				<artifactId>jandex-maven-plugin</artifactId>
+				<version>${jandex.version}</version>
+				<executions>
+					<execution>
+						<id>make-index</id>
+						<goals>
+							<goal>jandex</goal>
 						</goals>
 					</execution>
 				</executions>

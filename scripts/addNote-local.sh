@@ -71,17 +71,31 @@ On_IBlue='\033[0;104m'    # Blue
 On_IPurple='\033[0;105m'  # Purple
 On_ICyan='\033[0;106m'    # Cyan
 On_IWhite='\033[0;107m'   # White
-if [ $# -ne 0 ]
+if [ $# -eq 0 ]
 then
-   echo "usage: ./notes-create.sh"
+   echo "usage: addNote.sh <BASEENTITYCODE> <message> <tag>"
+   echo "e.g. ./addNote.sh PER_USER1 'Hello everyone' phone "
    exit;
 fi
-
-TOKEN=`../cmd/scripts/gettoken-prod.sh`
-#echo $TOKEN
+mydate=`date -u +"%Y-%m-%dT%H:%M:%S.000Z"`
+key=$1
+message=$2
+tag=$3
+echo ${mydate} $key $message $tag
+access_token=$(\
+    curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token \
+    --user backend:6781baee-3b97-4b01-bcd4-b14aecd38fd8 \
+    -H 'content-type: application/x-www-form-urlencoded' \
+    -d 'username=user1&password=WelcomeToTheHub121!&grant_type=password' | jq --raw-output '.access_token' \
+ )
+#echo $KEYCLOAK_RESPONSE
+#printf "${RED}Parsing access_token field, as we don't need the other elements:${NORMAL}\n"
+TOKEN=`echo "$KEYCLOAK_RESPONSE" | jq -r '.access_token'`
+TOKEN=$access_token
+echo $TOKEN
 echo ""
-echo "******** REPORT **********"
-DB=`curl -s  -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header "Authorization: Bearer $TOKEN"  --header "Cache-Control: no-cache"  "http://localhost:8095/v7/notes"`
-echo -e "${Yellow}${DB}${Color_Off}\n"
+CR=`curl -X POST "http://10.123.123.123:8095/v7/notes"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json"  --header 'Accept: application/json'  -d "{\"id\":0,\"content\":\"${message}\",\"created\":\"${mydate}\",\"sourceCode\":\"PER_USER1\",\"tags\":[{\"name\":\"${tag}\",\"value\":0}],\"targetCode\":\"${key}\",\"updated\":\"${mydate}\"}"`
+echo -e "${Green}${CR}${Color_Off}\n"
+echo ""
 echo ""
 
