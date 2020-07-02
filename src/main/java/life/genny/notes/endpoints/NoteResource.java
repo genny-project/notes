@@ -58,9 +58,12 @@ public class NoteResource {
 	String defaultRealm;
 
 
+	@Inject
+	SecurityIdentity securityIdentity;
+
 
 	@Inject
-	GennyToken userToken;
+	JsonWebToken accessToken2;
 
 	@OPTIONS
 	public Response opt() {
@@ -73,6 +76,9 @@ public class NoteResource {
 	public Response getNotesByTags(@QueryParam("tags") String tags,
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
 			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
+
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
 
 		List<Tag> tagList = null;
 		if (tags != null) {
@@ -92,6 +98,8 @@ public class NoteResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response newNote(@Context UriInfo uriInfo, @Valid Note note) {
 		note.id = null;
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
 		note.realm = userToken.getRealm();
 		note.sourceCode = userToken.getUserCode(); // force
 		// Fetch the base entities
@@ -140,6 +148,9 @@ public class NoteResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response findById(@PathParam("id") final Long id) {
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
+
 		Note note = Note.findById(id);
 		if (note == null) {
 			throw new WebApplicationException("Note with id of " + id + " does not exist.", Status.NOT_FOUND);
@@ -159,6 +170,10 @@ public class NoteResource {
 			@QueryParam("tags") @DefaultValue("") String tags,
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
 			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
+		// Object userName = this.idToken.getClaim("preferred_username");
+
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
 
 		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
 		List<Tag> tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
@@ -172,6 +187,9 @@ public class NoteResource {
 	@PUT
 	@Transactional
 	public Response updateNote(@PathParam("id") final Long id, @Valid Note note) {
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
+
 		Note existed = Note.findById(id);
 		if (existed == null) {
 			throw new WebApplicationException("Note with id of " + id + " does not exist.", Status.NOT_FOUND);
@@ -193,6 +211,9 @@ public class NoteResource {
 	@DELETE
 	@Transactional
 	public Response deleteNote(@PathParam("id") final Long id) {
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
+
 		Note existed = Note.findById(id);
 		if (existed == null) {
 			throw new WebApplicationException(Status.NOT_FOUND);
@@ -219,6 +240,8 @@ public class NoteResource {
 			@QueryParam(value = "length") int length, @QueryParam(value = "search[value]") String searchVal
 
 	) {
+		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		log.info("GennyToken = " + userToken);
 
 		life.genny.notes.models.DataTable<Note> result = new DataTable<>();
 		if (userToken.hasRole("admin")) {
@@ -255,6 +278,30 @@ public class NoteResource {
 	@Transactional
 	void onStart(@Observes StartupEvent ev) {
 		log.info("Note Endpoint starting");
+	//	log.info("MySQL Password = " + mysqlPassword);
+		// Creating some test
+		// Fetch the base entities
+//		BaseEntity sourceBE = (BaseEntity) em
+//				.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
+//				.setParameter("realmStr", "internmatch").setParameter("code", "PER_USER1").getSingleResult();
+//
+//		if (sourceBE != null) {
+//
+//			if (Note.count() == 0) {
+//
+//				Set<Tag> tags1 = Stream.of(new Tag("phone", 1), new Tag("intern", 3)).collect(Collectors.toSet());
+//
+//				Set<Tag> tags2 = Stream.of(new Tag("intern", 1), new Tag("rating", 5)).collect(Collectors.toSet());
+//
+//				Note test1 = new Note(defaultRealm, sourceBE, sourceBE, tags1, "This is the first note!");
+//				test1.persist();
+//
+//				Note test2 = new Note(defaultRealm, sourceBE, sourceBE, tags2, "This is the second note!");
+//				test2.persist();
+//			}
+//		} else {
+//			log.error("No Baseentitys set up yet in Database");
+//		}
 
 	}
 
