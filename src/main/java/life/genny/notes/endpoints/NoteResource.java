@@ -63,7 +63,7 @@ public class NoteResource {
 
 
 	@Inject
-	JsonWebToken accessToken2;
+	JsonWebToken accessToken;
 
 	@OPTIONS
 	public Response opt() {
@@ -77,7 +77,7 @@ public class NoteResource {
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
 			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
 
-		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
 
 		List<Tag> tagList = null;
@@ -98,7 +98,7 @@ public class NoteResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response newNote(@Context UriInfo uriInfo, @Valid Note note) {
 		note.id = null;
-		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
 		note.realm = userToken.getRealm();
 		note.sourceCode = userToken.getUserCode(); // force
@@ -148,7 +148,7 @@ public class NoteResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response findById(@PathParam("id") final Long id) {
-		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
 
 		Note note = Note.findById(id);
@@ -172,7 +172,7 @@ public class NoteResource {
 			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
 		// Object userName = this.idToken.getClaim("preferred_username");
 
-		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
 
 		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
@@ -187,7 +187,7 @@ public class NoteResource {
 	@PUT
 	@Transactional
 	public Response updateNote(@PathParam("id") final Long id, @Valid Note note) {
-		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
 
 		Note existed = Note.findById(id);
@@ -211,7 +211,7 @@ public class NoteResource {
 	@DELETE
 	@Transactional
 	public Response deleteNote(@PathParam("id") final Long id) {
-		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
 
 		Note existed = Note.findById(id);
@@ -240,7 +240,7 @@ public class NoteResource {
 			@QueryParam(value = "length") int length, @QueryParam(value = "search[value]") String searchVal
 
 	) {
-		GennyToken userToken = new GennyToken(accessToken2.getRawToken());
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
 
 		life.genny.notes.models.DataTable<Note> result = new DataTable<>();
