@@ -194,11 +194,11 @@ public class NoteResource {
 		if (existed == null) {
 			throw new WebApplicationException("Note with id of " + id + " does not exist.", Status.NOT_FOUND);
 		}
-		if (existed.realm != userToken.getRealm()) {
-			throw new WebApplicationException(
-					"Note with id of " + id + " does not exist in your realm ." + userToken.getRealm(),
-					Status.NOT_FOUND);
-		}
+//		if (existed.realm != userToken.getRealm()) {
+//			throw new WebApplicationException(
+//					"Note with id of " + id + " does not exist in your realm ." + userToken.getRealm(),
+//					Status.NOT_FOUND);
+//		}
 
 		existed.content = note.content;
 		existed.updated = LocalDateTime.now();
