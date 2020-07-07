@@ -88,7 +88,7 @@ KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internma
 TOKEN=`echo "$KEYCLOAK_RESPONSE" | jq -r '.access_token'`
 #echo $TOKEN
 echo ""
-CR=`curl -X GET "https://internmatch-cyrus.gada.io/v7/notes"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json"  --header 'Accept: application/json'  `
+CR=`curl -X GET "http://localhost:8095/v7/notes"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json"  --header 'Accept: application/json'  `
 echo -e "${Green}${CR}${Color_Off}\n"
 echo ""
 echo ""

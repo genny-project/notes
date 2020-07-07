@@ -94,7 +94,7 @@ TOKEN=`echo "$KEYCLOAK_RESPONSE" | jq -r '.access_token'`
 TOKEN=$access_token
 echo $TOKEN
 echo ""
-CR=`curl -X POST "http://10.123.123.123:8095/v7/notes"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json"  --header 'Accept: application/json'  -d "{\"id\":0,\"content\":\"${message}\",\"created\":\"${mydate}\",\"sourceCode\":\"PER_USER1\",\"tags\":[{\"name\":\"${tag}\",\"value\":0}],\"targetCode\":\"${key}\",\"updated\":\"${mydate}\"}"`
+CR=`curl -X POST "http://10.123.123.123:8095/v7/notes"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json"  --header 'Accept: application/json'  -d "{\"id\":0,\"content\":\"${message}\",\"created\":\"${mydate}\",\"sourceCode\":\"PER_USER1\",\"tags\":\"test:5\",\"targetCode\":\"${key}\",\"updated\":\"${mydate}\"}"`
 echo -e "${Green}${CR}${Color_Off}\n"
 echo ""
 echo ""

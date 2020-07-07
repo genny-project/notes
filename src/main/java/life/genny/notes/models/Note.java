@@ -24,6 +24,7 @@ import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import life.genny.notes.utils.LocalDateTimeAdapter;
+import life.genny.notes.utils.TagsAdapter;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -58,6 +59,7 @@ public class Note extends PanacheEntity {
     @CollectionTable(name = "tag")
 	@JoinColumn(name = "note_id")
 	@OnDelete(action= OnDeleteAction.CASCADE)
+	//@JsonbTypeAdapter(TagsAdapter.class)
 	public Set<Tag> tags = new HashSet<>();
 
 	

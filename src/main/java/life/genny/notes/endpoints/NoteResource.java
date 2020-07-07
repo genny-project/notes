@@ -94,8 +94,6 @@ public class NoteResource {
 
 	@Transactional
 	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response newNote(@Context UriInfo uriInfo, @Valid Note note) {
 		note.id = null;
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
@@ -183,7 +181,7 @@ public class NoteResource {
 		return Response.status(Status.OK).entity(notes).build();
 	}
 
-	@Path("{id}")
+	@Path("/{id}")
 	@PUT
 	@Transactional
 	public Response updateNote(@PathParam("id") final Long id, @Valid Note note) {
@@ -207,7 +205,7 @@ public class NoteResource {
 		return Response.status(Status.OK).entity(existed).build();
 	}
 
-	@Path("{id}")
+	@Path("/{id}")
 	@DELETE
 	@Transactional
 	public Response deleteNote(@PathParam("id") final Long id) {
