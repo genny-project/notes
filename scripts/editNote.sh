@@ -87,8 +87,9 @@ KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internma
 TOKEN=`echo "$KEYCLOAK_RESPONSE" | jq -r '.access_token'`
 echo $TOKEN
 echo ""
-CR=`curl -X PUT "http://internmatch.genny.life:8095/v7/notes/1"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json" -d '{"id":1,"content":"${content}","created":"2020-07-02T00:51:20.258Z","sourceCode":"PER_USER1","tags":"test:5,phone:1","targetCode":"PER_USER1"}' --header 'Accept: application/json'  `
-echo -e "${Green}${CR}${Color_Off}\n"
+CR=`curl -X PUT "http://localhost:8095/v7/notes/1"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json" -d "{\"id\":1,\"content\":\"${content}\",\"created\":\"2020-07-02T00:51:20.258Z\",\"sourceCode\":\"PER_USER1\",\"tags\":[{\"name\":\"test\",\"value\":2}],\"targetCode\":\"PER_USER1\"}" --header 'Accept: application/json'  `
+CR2=`echo $CR | tr '\r\n' ' ' | jq . `
+echo -e "${Green}${CR2}${Color_Off}\n"
 echo ""
 echo ""
 

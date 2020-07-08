@@ -14,6 +14,7 @@ import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.Table;
 import javax.validation.constraints.NotEmpty;
@@ -54,7 +55,7 @@ public class Note extends PanacheEntity {
 	public String content;
 	
 	// public Date updated = new Date();
-	@ElementCollection
+	@ElementCollection(fetch=FetchType.EAGER)
 	@Column(name = "note_tag")
     @CollectionTable(name = "tag")
 	@JoinColumn(name = "note_id")
