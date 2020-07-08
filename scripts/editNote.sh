@@ -73,13 +73,15 @@ On_ICyan='\033[0;106m'    # Cyan
 On_IWhite='\033[0;107m'   # White
 if [ $# -eq 0 ]
 then
-   echo "usage: eeditNote.sh <content>"
-   echo "e.g. ./editNote.sh 'this is altered' "
+   echo "usage: editNote.sh <url> <id>  <content>"
+   echo "e.g. ./editNote.sh http://localhoost:8095 1 'this is altered' "
    exit;
 fi
 mydate=`date -u +"%Y-%m-%dT%H:%M:%S.000Z"`
-content=$1
-#echo ${mydate} $key $message $tag
+url=$1
+id=$2
+content=$3
+#echo ${mydate} $url $id $content 
 KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token  -H "Content-Type: application/x-www-form-urlencoded" -d 'username=user1' -d 'password=WelcomeToTheHub121!' -d 'grant_type=password' -d 'client_id=internmatch'  -d 'client_secret=dc7d0960-2e1d-4a78-9eef-77678066dbd3'`
 #KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token  -H "Content-Type: application/x-www-form-urlencoded" -d 'username=user1' -d 'password=WelcomeToTheHub121!' -d 'grant_type=password' -d 'client_id=backend'  -d 'client_secret=6781baee-3b97-4b01-bcd4-b14aecd38fd8'`
 #echo $KEYCLOAK_RESPONSE
@@ -87,7 +89,7 @@ KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internma
 TOKEN=`echo "$KEYCLOAK_RESPONSE" | jq -r '.access_token'`
 echo $TOKEN
 echo ""
-CR=`curl -X PUT "http://localhost:8095/v7/notes/1"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json" -d "{\"id\":1,\"content\":\"${content}\",\"created\":\"2020-07-02T00:51:20.258Z\",\"sourceCode\":\"PER_USER1\",\"tags\":[{\"name\":\"test\",\"value\":2}],\"targetCode\":\"PER_USER1\"}" --header 'Accept: application/json'  `
+CR=`curl -X PUT "${url}/v7/notes/${id}"  --header "Authorization: Bearer $TOKEN" -H "accept: */*" -H "Content-Type: application/json" -d "{\"id\":${id},\"content\":\"${content}\",\"created\":\"2020-07-02T00:51:20.258Z\",\"sourceCode\":\"PER_USER1\",\"tags\":[{\"name\":\"test\",\"value\":2}],\"targetCode\":\"PER_USER1\"}" --header 'Accept: application/json'  `
 CR2=`echo $CR | tr '\r\n' ' ' | jq . `
 echo -e "${Green}${CR2}${Color_Off}\n"
 echo ""
