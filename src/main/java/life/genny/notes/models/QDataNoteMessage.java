@@ -1,15 +1,14 @@
 package life.genny.notes.models;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @RegisterForReflection
-public class QNoteMessage implements Serializable{
+public class QDataNoteMessage extends QDataMessage{
 
+	private static final String DATATYPE_NOTE = Note.class.getSimpleName();
 	/**
 	 * 
 	 */
@@ -17,28 +16,37 @@ public class QNoteMessage implements Serializable{
 	private Note[] items;
 	private Long total;
 	private String status;
-	private String[] recipientCodeArray = null;
 	
 	/**
 	 * @param items
 	 * @param total
 	 */
-	public QNoteMessage() {}
+	public QDataNoteMessage() {
+		super(DATATYPE_NOTE);
+	}
 	
-	public QNoteMessage(Note item,NoteStatus status) {
+	public QDataNoteMessage(Note item,NoteStatus status) {
+		super(DATATYPE_NOTE);
 		List<Note> notes = new ArrayList<Note>();
 		notes.add(item);
 		this.total = 1L;
 		this.items = notes.toArray(new Note[0]);
 		this.status = status.toString();
+		this.setDelete(status.equals(NoteStatus.DELETED));
+		this.setReplace(status.equals(NoteStatus.UPDATED));
+		this.setSourceAddress(item.sourceCode);
+		List<String> codes = new ArrayList<String>();
+		codes.add(item.targetCode);
+		this.setTargetCodes(codes);
 
 	}
 	
-	public QNoteMessage(List<Note> items, Long total) {
+	public QDataNoteMessage(List<Note> items, Long total) {
 		this(items,total,NoteStatus.READ);
 	}
 	
-	public QNoteMessage(List<Note> items, Long total, NoteStatus status) {
+	public QDataNoteMessage(List<Note> items, Long total, NoteStatus status) {
+		super(DATATYPE_NOTE);
 		if ((items == null) || (items.isEmpty())) {
 			items = new ArrayList<Note>();
 		}
@@ -46,6 +54,13 @@ public class QNoteMessage implements Serializable{
 		this.items = items.toArray(new Note[0]);
 		this.total = total;
 		this.status = status.toString();
+		this.setDelete(status.equals(NoteStatus.DELETED));
+		this.setReplace(status.equals(NoteStatus.UPDATED));
+		this.setSourceAddress(this.items[0].sourceCode);
+		List<String> codes = new ArrayList<String>();
+		codes.add(this.items[0].targetCode);
+		this.setTargetCodes(codes);
+
 	}
 	/**
 	 * @return the items
@@ -86,8 +101,6 @@ public class QNoteMessage implements Serializable{
 		this.status = status;
 	}
 	
-	public void setRecipients(Set<String> recipientCodeList)
-	{
-		this.recipientCodeArray = recipientCodeList.toArray(new String[0]);
-	}
+
+	
 }

@@ -16,13 +16,13 @@ import org.jboss.logging.Logger;
 
 import life.genny.notes.models.GennyToken;
 import life.genny.notes.models.Note;
-import life.genny.notes.models.QNoteMessage;
+import life.genny.notes.models.QDataNoteMessage;
 //
 
 public class WriteToBridge {
 	 private static final Logger log = Logger.getLogger(Note.class);	
 
-	public static String writeMessage(String bridgeUrl, QNoteMessage msg, final GennyToken userToken) {
+	public static String writeMessage(String bridgeUrl, QDataNoteMessage msg, final GennyToken userToken) {
 
 		Jsonb jsonb = JsonbBuilder.create();
 

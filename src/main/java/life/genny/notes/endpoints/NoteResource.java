@@ -45,7 +45,7 @@ import life.genny.notes.models.GennyToken;
 import life.genny.notes.models.Note;
 import life.genny.notes.models.NoteStatus;
 import life.genny.notes.models.ParentNote;
-import life.genny.notes.models.QNoteMessage;
+import life.genny.notes.models.QDataNoteMessage;
 import life.genny.notes.models.Tag;
 import life.genny.notes.utils.WriteToBridge;
 
@@ -59,6 +59,9 @@ public class NoteResource {
 	@ConfigProperty(name = "default.realm", defaultValue = "genny")
 	String defaultRealm;
 
+	@ConfigProperty(name = "quarkus.bridge.service.url", defaultValue = "http://alyson7.genny.life/api/service")
+	String bridgeUrl;
+	
 	@Inject
 	SecurityIdentity securityIdentity;
 
@@ -86,7 +89,7 @@ public class NoteResource {
 		} else {
 			tagList = new ArrayList<Tag>();
 		}
-		QNoteMessage notes = Note.findByTags(userToken, tagList, Page.of(pageIndex, pageSize));
+		QDataNoteMessage notes = Note.findByTags(userToken, tagList, Page.of(pageIndex, pageSize));
 
 		return Response.status(Status.OK).entity(notes).build();
 	}
@@ -119,9 +122,9 @@ public class NoteResource {
 		if (parentNote != null) {
 			log.info("Writing "+note.targetCode+" group ("+noteStatus+") to "+parentNote.noteUsers);
 
-			QNoteMessage msg = new QNoteMessage(note, noteStatus);
-			msg.setRecipients(parentNote.noteUsers);
-			WriteToBridge.writeMessage("https://internmatch-dev1.gada.io/api/service", msg, userToken);
+			QDataNoteMessage msg = new QDataNoteMessage(note, noteStatus);
+			msg.setRecipientCodeArray(parentNote.noteUsers.toArray(new String[0]));
+			WriteToBridge.writeMessage(bridgeUrl, msg, userToken);
 		} else {
 			log.error("ParentNote is null for notes "+note.targetCode);
 		}
@@ -167,7 +170,7 @@ public class NoteResource {
 
 		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
 		List<Tag> tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
-		QNoteMessage notes = Note.findByTargetAndTags(userToken, tagList, targetCode, Page.of(pageIndex, pageSize));
+		QDataNoteMessage notes = Note.findByTargetAndTags(userToken, tagList, targetCode, Page.of(pageIndex, pageSize));
 
 		return Response.status(Status.OK).entity(notes).build();
 	}

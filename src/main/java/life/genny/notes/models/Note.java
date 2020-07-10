@@ -81,7 +81,7 @@ public class Note extends PanacheEntity {
 		return delete("id", id);
 	}
 
-	public static QNoteMessage findByTags(final GennyToken userToken, final List<Tag> tags, Page page) {
+	public static QDataNoteMessage findByTags(final GennyToken userToken, final List<Tag> tags, Page page) {
 		List<String> tagStringList = tags.stream().collect(Collectors.mapping(p -> p.getName(), Collectors.toList()));
 
 		PanacheQuery<Note> notes = null;
@@ -104,11 +104,11 @@ public class Note extends PanacheEntity {
 
 		}		
 		
-		QNoteMessage noteMsg = new QNoteMessage( notes.page(page).list(),total);
+		QDataNoteMessage noteMsg = new QDataNoteMessage( notes.page(page).list(),total);
 		return noteMsg;
 	}
 
-	public static QNoteMessage findByTargetAndTags(final GennyToken userToken, final List<Tag> tags, final String targetCode,
+	public static QDataNoteMessage findByTargetAndTags(final GennyToken userToken, final List<Tag> tags, final String targetCode,
 			Page page) {
 		List<String> tagStringList = tags.stream().collect(Collectors.mapping(p -> p.getName(), Collectors.toList()));
 
@@ -136,7 +136,7 @@ public class Note extends PanacheEntity {
 
 		}
 		
-		QNoteMessage noteMsg = new QNoteMessage( notes.page(page).list(),total);
+		QDataNoteMessage noteMsg = new QDataNoteMessage( notes.page(page).list(),total);
 		return noteMsg;
 
 
