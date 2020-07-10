@@ -9,26 +9,29 @@ import javax.persistence.Embeddable;
 public class Tag implements Serializable {
 	
     private String name;
-    private int value;
+    private Integer value=0;
+    
     
     public Tag() {}
-    
+
 	/**
 	 * @param name
 	 * @param value
 	 */
 	public Tag(String name) {
 		this.name = name;
-		this.value = 0;
+		this.value =0;
 	}  
+
 	/**
 	 * @param name
 	 * @param value
 	 */
-	public Tag(String name, int value) {
-		this.name = name.toLowerCase();
+	public Tag(String name,Integer value) {
+		this.name = name;
 		this.value = value;
-	}
+	}  
+
 	/**
 	 * @return the name
 	 */
@@ -44,23 +47,26 @@ public class Tag implements Serializable {
 	/**
 	 * @return the value
 	 */
-	public int getValue() {
+	public Integer getValue() {
 		return value;
 	}
 	/**
 	 * @param value the value to set
 	 */
-	public void setValue(int value) {
+	public void setValue(Integer value) {
 		this.value = value;
 	}
+
 	@Override
 	public String toString() {
-		return "Tag [" + (name != null ? "name=" + name + ", " : "") + "value=" + value + "]";
+		return "Tag [" + (name != null ? "name=" + name + ", " : "") + (value != null ? "value=" + value : "") + "]";
 	}
+
 	@Override
 	public int hashCode() {
-		return Objects.hash(name, value);
+		return Objects.hash(name);
 	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -68,8 +74,9 @@ public class Tag implements Serializable {
 		if (!(obj instanceof Tag))
 			return false;
 		Tag other = (Tag) obj;
-		return Objects.equals(name, other.name) && value == other.value;
+		return Objects.equals(name, other.name);
 	}
- 
-    
+
+	
+
 }

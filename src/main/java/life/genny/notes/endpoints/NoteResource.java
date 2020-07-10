@@ -43,9 +43,11 @@ import io.quarkus.security.identity.SecurityIdentity;
 import life.genny.notes.models.DataTable;
 import life.genny.notes.models.GennyToken;
 import life.genny.notes.models.Note;
+import life.genny.notes.models.NoteStatus;
+import life.genny.notes.models.ParentNote;
 import life.genny.notes.models.QNoteMessage;
 import life.genny.notes.models.Tag;
-
+import life.genny.notes.utils.WriteToBridge;
 
 @Path("/v7/notes")
 @Produces(MediaType.APPLICATION_JSON)
@@ -57,10 +59,8 @@ public class NoteResource {
 	@ConfigProperty(name = "default.realm", defaultValue = "genny")
 	String defaultRealm;
 
-
 	@Inject
 	SecurityIdentity securityIdentity;
-
 
 	@Inject
 	JsonWebToken accessToken;
@@ -71,7 +71,6 @@ public class NoteResource {
 	}
 
 	@GET
-	// @RolesAllowed({"admin"})
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getNotesByTags(@QueryParam("tags") String tags,
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
@@ -100,46 +99,33 @@ public class NoteResource {
 		log.info("GennyToken = " + userToken);
 		note.realm = userToken.getRealm();
 		note.sourceCode = userToken.getUserCode(); // force
-		// Fetch the base entities
-//		BaseEntity sourceBE = null;
-//		BaseEntity targetBE = null;
-//
-//		try {
-//			sourceBE = (BaseEntity) em
-//					.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
-//					.setParameter("realmStr", realm).setParameter("code", note.sourceCode).getSingleResult();
-//			if (sourceBE == null) {
-//				throw new WebApplicationException("BaseEntity with code " + note.sourceCode + " does not exist.",
-//						Status.NOT_FOUND);
-//			}
-//		} catch (Exception e) {
-//			throw new WebApplicationException("BaseEntity with code " + note.sourceCode + " does not exist.",
-//					Status.NOT_FOUND);
-//		}
-//
-//		try {
-//			targetBE = (BaseEntity) em
-//					.createQuery("SELECT be FROM BaseEntity be where be.realm=:realmStr and be.code=:code")
-//					.setParameter("realmStr", realm).setParameter("code", note.targetCode).getSingleResult();
-//
-//			if (targetBE == null) {
-//				throw new WebApplicationException("BaseEntity with code " + note.targetCode + " does not exist.",
-//						Status.NOT_FOUND);
-//			}
-//		} catch (Exception e) {
-//			throw new WebApplicationException("BaseEntity with code " + note.targetCode + " does not exist.",
-//					Status.NOT_FOUND);
-//		}
-//
-//		note.setSource(sourceBE);
-//		note.setTarget(targetBE);
+
 		note.persist();
 		
-		QNoteMessage msg = new QNoteMessage();
-	//	WriteToBridge.writeMessage("https://internmatch-dev1.gada.io/api/service",msg,userToken);
+		processParentNote(userToken, note.targetCode);
+
+
+		notifyNoteGroup(note, NoteStatus.NEW);
 
 		URI uri = uriInfo.getAbsolutePathBuilder().path(NoteResource.class, "findById").build(note.id);
 		return Response.created(uri).build();
+	}
+
+	private void notifyNoteGroup(Note note, NoteStatus noteStatus) {
+
+		GennyToken userToken = new GennyToken(accessToken.getRawToken());
+		ParentNote parentNote = ParentNote.findByCode(note.targetCode);
+
+		if (parentNote != null) {
+			log.info("Writing "+note.targetCode+" group ("+noteStatus+") to "+parentNote.noteUsers);
+
+			QNoteMessage msg = new QNoteMessage(note, noteStatus);
+			msg.setRecipients(parentNote.noteUsers);
+			WriteToBridge.writeMessage("https://internmatch-dev1.gada.io/api/service", msg, userToken);
+		} else {
+			log.error("ParentNote is null for notes "+note.targetCode);
+		}
+
 	}
 
 	@Path("/id/{id}")
@@ -148,6 +134,7 @@ public class NoteResource {
 	public Response findById(@PathParam("id") final Long id) {
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
+
 
 		Note note = Note.findById(id);
 		if (note == null) {
@@ -158,12 +145,14 @@ public class NoteResource {
 					"Note with id of " + id + " does not exist in your realm ." + userToken.getRealm(),
 					Status.NOT_FOUND);
 		}
+		processParentNote(userToken, note.targetCode);
+
 		return Response.status(Status.OK).entity(note).build();
 	}
 
 	@Path("/{targetCode}")
 	@GET
-	// @RolesAllowed({"Everyone"})
+	@Transactional
 	public Response getNotesByTargetCodeAndTags(@PathParam("targetCode") final String targetCode,
 			@QueryParam("tags") @DefaultValue("") String tags,
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
@@ -172,13 +161,34 @@ public class NoteResource {
 
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
+		processParentNote(userToken, targetCode);
+
+		// TODO - Check user access security here.
 
 		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
 		List<Tag> tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
-		QNoteMessage notes = Note.findByTargetAndTags(userToken, tagList, targetCode,
-				Page.of(pageIndex, pageSize));
+		QNoteMessage notes = Note.findByTargetAndTags(userToken, tagList, targetCode, Page.of(pageIndex, pageSize));
 
 		return Response.status(Status.OK).entity(notes).build();
+	}
+
+	/**
+	 * @param userToken
+	 * @param targetCode
+	 */
+	private void processParentNote(GennyToken userToken, final String targetCode) {
+		ParentNote parentNote = ParentNote.findByCode(targetCode);
+		if (parentNote == null) {
+			parentNote = new ParentNote(userToken.getRealm(), targetCode, userToken.getUserCode());
+			parentNote.persist();
+			log.info("New ParentNote for "+targetCode+" created and adding "+userToken.getUserCode());
+		} else {
+			if (!parentNote.noteUsers.contains(userToken.getUserCode())) {
+				parentNote.noteUsers.add(userToken.getUserCode());
+				parentNote.persist();
+				log.info("Updating ParentNote for "+targetCode+" added "+userToken.getUserCode());
+			}
+		}
 	}
 
 	@Path("/{id}")
@@ -201,6 +211,11 @@ public class NoteResource {
 		existed.content = note.content;
 		existed.updated = LocalDateTime.now();
 		existed.persist();
+		
+		processParentNote(userToken, existed.targetCode);
+
+
+		notifyNoteGroup(existed, NoteStatus.UPDATED);
 
 		return Response.status(Status.OK).entity(existed).build();
 	}
@@ -216,18 +231,22 @@ public class NoteResource {
 		if (existed == null) {
 			throw new WebApplicationException(Status.NOT_FOUND);
 		}
-		log.info("Existing realm = ["+existed.realm+"] , userToken realm = ["+userToken.getRealm()+"]");
+		log.info("Existing realm = [" + existed.realm + "] , userToken realm = [" + userToken.getRealm() + "]");
 //		if (existed.realm != userToken.getRealm()) {
 //			throw new WebApplicationException(
 //					"Note with id of " + id + " does not exist in your realm " + userToken.getRealm(),
 //					Status.NOT_FOUND);
 //		}
-		if ((userToken.hasRole("admin"))||(userToken.getUserCode().equals(existed.sourceCode))) {
+		if ((userToken.hasRole("admin")) || (userToken.getUserCode().equals(existed.sourceCode))) {
 			Note.deleteById(id);
 		} else {
 			throw new WebApplicationException("You do not have permission to delete this note", Status.FORBIDDEN);
 
 		}
+		processParentNote(userToken, existed.targetCode);
+
+		notifyNoteGroup(existed, NoteStatus.DELETED);
+
 		return Response.status(Status.OK).build();
 	}
 
@@ -276,7 +295,7 @@ public class NoteResource {
 	@Transactional
 	void onStart(@Observes StartupEvent ev) {
 		log.info("Note Endpoint starting");
-	//	log.info("MySQL Password = " + mysqlPassword);
+		// log.info("MySQL Password = " + mysqlPassword);
 		// Creating some test
 		// Fetch the base entities
 //		BaseEntity sourceBE = (BaseEntity) em

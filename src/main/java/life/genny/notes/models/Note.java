@@ -19,17 +19,16 @@ import javax.persistence.JoinColumn;
 import javax.persistence.Table;
 import javax.validation.constraints.NotEmpty;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+import org.jboss.logging.Logger;
+
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import life.genny.notes.utils.LocalDateTimeAdapter;
-import life.genny.notes.utils.TagsAdapter;
-
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-import org.jboss.logging.Logger;
 
 @Entity
 @Cacheable
