@@ -72,7 +72,15 @@ public class ParentNote extends PanacheEntity {
 	}
 	
 	public static ParentNote findByCode(String code) {
-		return find("code", code).firstResult();
+		ParentNote pn = null;
+		
+		try {
+			pn = find("code", code).firstResult();
+		} catch (Exception e) {
+			
+		}
+		
+		return pn;
 	}
 
 
