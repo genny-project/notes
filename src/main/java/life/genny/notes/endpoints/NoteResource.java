@@ -180,17 +180,20 @@ public class NoteResource {
 	 * @param targetCode
 	 */
 	private void processParentNote(GennyToken userToken, final String targetCode) {
+		if (!userToken.getString("preferred_username").equals("service")) { // don't worry if system / service
 		ParentNote parentNote = ParentNote.findByCode(targetCode);
+
 		if (parentNote == null) {
-			parentNote = new ParentNote(userToken.getRealm(), targetCode, userToken.getUserCode());
-			parentNote.persist();
-			log.info("New ParentNote for "+targetCode+" created and adding "+userToken.getUserCode());
+				parentNote = new ParentNote(userToken.getRealm(), targetCode, userToken.getUserCode());
+				parentNote.persist();
+				log.info("New ParentNote for "+targetCode+" created and adding "+userToken.getUserCode());
 		} else {
 			if (!parentNote.noteUsers.contains(userToken.getUserCode())) {
 				parentNote.noteUsers.add(userToken.getUserCode());
 				parentNote.persist();
 				log.info("Updating ParentNote for "+targetCode+" added "+userToken.getUserCode());
 			}
+		}
 		}
 	}
 
