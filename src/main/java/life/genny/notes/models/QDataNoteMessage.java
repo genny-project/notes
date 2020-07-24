@@ -56,9 +56,11 @@ public class QDataNoteMessage extends QDataMessage{
 		this.status = status.toString();
 		this.setDelete(status.equals(NoteStatus.DELETED));
 		this.setReplace(status.equals(NoteStatus.UPDATED));
-		this.setSourceAddress(this.items[0].sourceCode);
 		List<String> codes = new ArrayList<String>();
-		codes.add(this.items[0].targetCode);
+		if (!((items == null) || (items.isEmpty()))) {
+			this.setSourceAddress(this.items[0].sourceCode);
+			codes.add(this.items[0].targetCode);
+		}
 		this.setTargetCodes(codes);
 
 	}
