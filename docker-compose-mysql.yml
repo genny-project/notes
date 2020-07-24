@@ -2,7 +2,7 @@ version: '2.3'
 
 services:
   mysql:
-    image: mysql:8.0.21
+    image: gennyproject/mysql:8x 
     container_name: mysql
     environment:
       - MYSQL_URL=mysql
