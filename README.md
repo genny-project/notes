@@ -1,2 +1,2 @@
 # notes
-Notes Quarkus Service
+Notes Quarkus Service.
