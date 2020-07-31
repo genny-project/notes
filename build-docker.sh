@@ -8,8 +8,6 @@ function prop() {
 
 
 echo "Building docker gennyproject/${pwd}:${version}"
-pushd $PWD
 ./mvnw clean package -Dquarkus.container-image.build=true -DskipTests=true
 docker tag ${USER}/${pwd}:${version}  gennyproject/${pwd}:latest 
 docker tag ${USER}/${pwd}:${version}  gennyproject/${pwd}:${version} 
-popd
