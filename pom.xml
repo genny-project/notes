@@ -185,7 +185,7 @@
 							</run>
 						</image>
 						<image>
-							<name>quay.io/keycloak/keycloak:8.0.2</name>
+							<name>quay.io/keycloak/keycloak:11.0.0</name>
 							<run>
 								<env>
 									<KEYCLOAK_USER>admin</KEYCLOAK_USER>
