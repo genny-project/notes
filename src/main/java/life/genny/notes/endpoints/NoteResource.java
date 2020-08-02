@@ -120,7 +120,7 @@ public class NoteResource {
 		ParentNote parentNote = ParentNote.findByCode(note.targetCode);
 
 		if (parentNote != null) {
-			log.info("Writing "+note.targetCode+" group ("+noteStatus+") to "+parentNote.noteUsers);
+			log.info("Writing "+note.targetCode+" group ("+noteStatus+") to "+parentNote.noteUsers+" using "+bridgeUrl);
 
 			QDataNoteMessage msg = new QDataNoteMessage(note, noteStatus);
 			msg.setRecipientCodeArray(parentNote.noteUsers.toArray(new String[0]));
