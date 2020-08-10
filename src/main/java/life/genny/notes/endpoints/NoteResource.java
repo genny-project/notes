@@ -29,6 +29,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
@@ -59,8 +60,6 @@ public class NoteResource {
 	@ConfigProperty(name = "default.realm", defaultValue = "genny")
 	String defaultRealm;
 
-	@ConfigProperty(name = "quarkus.bridge.service.url", defaultValue = "http://alyson7.genny.life/api/service")
-	String bridgeUrl;
 	
 	@Inject
 	SecurityIdentity securityIdentity;
@@ -124,6 +123,8 @@ public class NoteResource {
 
 			QDataNoteMessage msg = new QDataNoteMessage(note, noteStatus);
 			msg.setRecipientCodeArray(parentNote.noteUsers.toArray(new String[0]));
+			String bridgeUrl = ConfigProvider.getConfig().getValue("quarkus.bridge.service.url", String.class);
+
 			WriteToBridge.writeMessage(bridgeUrl, msg, userToken);
 		} else {
 			log.error("ParentNote is null for notes "+note.targetCode);
