@@ -119,11 +119,12 @@ public class NoteResource {
 		ParentNote parentNote = ParentNote.findByCode(note.targetCode);
 
 		if (parentNote != null) {
+			String bridgeUrl = ConfigProvider.getConfig().getValue("quarkus.bridge.service.url", String.class);
+
 			log.info("Writing "+note.targetCode+" group ("+noteStatus+") to "+parentNote.noteUsers+" using "+bridgeUrl);
 
 			QDataNoteMessage msg = new QDataNoteMessage(note, noteStatus);
 			msg.setRecipientCodeArray(parentNote.noteUsers.toArray(new String[0]));
-			String bridgeUrl = ConfigProvider.getConfig().getValue("quarkus.bridge.service.url", String.class);
 
 			WriteToBridge.writeMessage(bridgeUrl, msg, userToken);
 		} else {
