@@ -82,9 +82,9 @@ url=$1
 key=$2
 tag=$3
 echo ${mydate} $key $url  $message $tag
-KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token  -H "Content-Type: application/x-www-form-urlencoded" -d 'username=user1' -d 'password=WelcomeToTheHub121!' -d 'grant_type=password' -d 'client_id=internmatch'  -d 'client_secret=dc7d0960-2e1d-4a78-9eef-77678066dbd3'`
-#KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token  -H "Content-Type: application/x-www-form-urlencoded" -d 'username=user1' -d 'password=WelcomeToTheHub121!' -d 'grant_type=password' -d 'client_id=backend'  -d 'client_secret=6781baee-3b97-4b01-bcd4-b14aecd38fd8'`
-#echo $KEYCLOAK_RESPONSE
+KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token  -H "Content-Type: application/x-www-form-urlencoded" -d 'username=user1' -d 'password=rY2bbG7PeB09RXwPg' -d 'grant_type=password' -d 'client_id=alyson'  `
+#KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token  -H "Content-Type: application/x-www-form-urlencoded" -d 'username=user1' -d 'password=rY2bbG7PeB09RXwPg' -d 'grant_type=password' -d 'client_id=backend'  -d 'client_secret=6781baee-3b97-4b01-bcd4-b14aecd38fd8'`
+echo $KEYCLOAK_RESPONSE
 #printf "${RED}Parsing access_token field, as we don't need the other elements:${NORMAL}\n"
 TOKEN=`echo "$KEYCLOAK_RESPONSE" | jq -r '.access_token'`
 #echo $TOKEN
