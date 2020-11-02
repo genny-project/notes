@@ -35,7 +35,15 @@ public class LocalDateTimeAdapter implements JsonbAdapter<LocalDateTime, JsonVal
 		String str = obj.toString();
 		str = str.substring(0,str.length()-1);
 		String value = str.substring(1);
-		LocalDateTime ret = dateFormatter.parse(value, LocalDateTime::from);
+		LocalDateTime ret = null;
+		
+		try {
+			ret = dateFormatter.parse(value, LocalDateTime::from);
+		} catch (Exception e) {
+			dateTimePattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'";
+			dateFormatter = DateTimeFormatter.ofPattern(dateTimePattern);
+			ret = dateFormatter.parse(value, LocalDateTime::from);
+		}
 
 	return ret;
 	}
