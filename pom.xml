@@ -13,7 +13,7 @@
 		<keycloak.test.port>8180</keycloak.test.port>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<mysql.test.port>3333</mysql.test.port>
+		<mysql.test.port>3334</mysql.test.port>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<quarkus-plugin.version>1.9.2.Final</quarkus-plugin.version>
 		<quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
@@ -185,7 +185,7 @@
 							</run>
 						</image>
 						<image>
-							<name>quay.io/keycloak/keycloak:11.0.0</name>
+							<name>quay.io/keycloak/keycloak:11.0.3</name>
 							<run>
 								<env>
 									<KEYCLOAK_USER>admin</KEYCLOAK_USER>
