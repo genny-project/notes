@@ -1,23 +1,31 @@
 package org.acme.security.keycloak.authorization;
 
-
 import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;
 import org.keycloak.representations.AccessTokenResponse;
 
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
+
+@QuarkusTest
 @QuarkusTestResource(KeycloakServer.class)
 public class PolicyEnforcerTest {
 
-    private static final String KEYCLOAK_SERVER_URL = "http://localhost:8580/auth";
-            //System.getProperty("keycloak.url", "https://localhost:8543/auth");
+    private static final String KEYCLOAK_SERVER_URL = "http://localhost:8580/auth";//System.getProperty("keycloak.url", "http://localhost:8580/auth");
     private static final String KEYCLOAK_REALM = "quarkus";
 
     static {
         RestAssured.useRelaxedHTTPSValidation();
     }
 
+    
+    @Test
+    public void testAccessToken()
+    {
+    	String accessToken = getAccessToken("alice");
+    	System.out.println("AccessToken Test="+accessToken);
+    }
+    
    // @Test
     public void testAccessUserResource() {
         RestAssured.given().auth().oauth2(getAccessToken("alice"))
@@ -30,7 +38,7 @@ public class PolicyEnforcerTest {
                 .statusCode(200);
     }
 
-  //  @Test
+   // @Test
     public void testAccessAdminResource() {
         RestAssured.given().auth().oauth2(getAccessToken("alice"))
                 .when().get("/api/admin")
