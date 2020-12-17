@@ -10,10 +10,11 @@
 	<properties>
 		<commons-lang3.version>3.10</commons-lang3.version>
 		<docker-plugin.version>0.33.0</docker-plugin.version>
-		<keycloak.test.port>8180</keycloak.test.port>
+		<keycloak.test.port>8580</keycloak.test.port>
+		<keycloak.version>11.0.3</keycloak.version>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<mysql.test.port>3334</mysql.test.port>
+		<mysql.test.port>3336</mysql.test.port>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<quarkus-plugin.version>1.10.3.Final</quarkus-plugin.version>
 		<quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
@@ -184,7 +185,7 @@
 								</wait>
 							</run>
 						</image>
-						<image>
+	<!-- 					<image>
 							<name>quay.io/keycloak/keycloak:11.0.3</name>
 							<run>
 								<env>
@@ -200,13 +201,13 @@
 									<color>yellow</color>
 								</log>
 								<wait>
-									<log>ready for connections</log>
-									<time>40000</time>
+									<log>started in</log>
+									<time>60000</time>
 									<shutdown>5000</shutdown>
 									<kill>5000</kill>
 								</wait>
 							</run>
-						</image>
+						</image> -->
 					</images>
 				</configuration>
 			</plugin>
