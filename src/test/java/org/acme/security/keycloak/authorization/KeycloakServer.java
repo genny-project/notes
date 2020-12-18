@@ -1,22 +1,33 @@
 package org.acme.security.keycloak.authorization;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
+import life.genny.notes.utils.PropertiesReader;
+
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
 public class KeycloakServer implements QuarkusTestResourceLifecycleManager {
     private GenericContainer keycloak;
+    
+    public static  String KEYCLOAK_SERVER_PORT = new PropertiesReader("genny.properties").getProperty("keycloak.test.port","8580");
+    public static String KEYCLOAK_VERSION = new PropertiesReader("genny.properties").getProperty("keycloak.version","11.0.3");
 
     @Override
     public Map<String, String> start() {
-        keycloak = new FixedHostPortGenericContainer("quay.io/keycloak/keycloak:" + "11.0.3")//System.getProperty("keycloak.version"))
-                .withFixedExposedPort(8580, 8080)
+    	
+ 
+    	
+    	System.out.println("XXXXXKeycloak Server port = "+Integer.parseInt(KEYCLOAK_SERVER_PORT));
+    	
+        keycloak = new FixedHostPortGenericContainer("quay.io/keycloak/keycloak:" + KEYCLOAK_VERSION)
+                .withFixedExposedPort(Integer.parseInt(KEYCLOAK_SERVER_PORT), 8080)
                 .withFixedExposedPort(8543, 8443)
                 .withEnv("KEYCLOAK_USER", "admin")
                 .withEnv("KEYCLOAK_PASSWORD", "admin")
