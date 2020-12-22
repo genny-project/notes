@@ -8,11 +8,11 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 
 @QuarkusTest
-@QuarkusTestResource(KeycloakServer.class)
+@QuarkusTestResource(GennyServers.class)
 public class PolicyEnforcerTest {
 
 
-    private static final String KEYCLOAK_SERVER_URL = System.getProperty("keycloak.url", "http://localhost:"+KeycloakServer.KEYCLOAK_SERVER_PORT+"/auth");
+//    private static final String KEYCLOAK_SERVER_URL = System.getProperty("keycloak.url", "http://localhost:"+GennyServers.KEYCLOAK_SERVER_PORT+"/auth");
     private static final String KEYCLOAK_REALM = "quarkus";
 
     static {
@@ -23,6 +23,9 @@ public class PolicyEnforcerTest {
     @Test
     public void testAccessToken()
     {
+    	
+    	System.out.println("*************policyEnforcerTest : keycloak URL = "+GennyServers.keycloakUrl);
+    	
     	String accessToken = getAccessToken("alice");
     	System.out.println("AccessToken Test="+accessToken);
     }
@@ -72,7 +75,7 @@ public class PolicyEnforcerTest {
                 .param("client_id", "backend-service")
                 .param("client_secret", "secret")
                 .when()
-                .post(KEYCLOAK_SERVER_URL + "/realms/" + KEYCLOAK_REALM + "/protocol/openid-connect/token")
+                .post(GennyServers.keycloakUrl+ "/realms/" + KEYCLOAK_REALM + "/protocol/openid-connect/token")
                 .as(AccessTokenResponse.class).getToken();
     }
 }

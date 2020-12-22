@@ -11,7 +11,7 @@
 		<commons-lang3.version>3.10</commons-lang3.version>
 		<docker-plugin.version>0.33.0</docker-plugin.version>
 		<keycloak.test.port>8580</keycloak.test.port>
-		<keycloak.version>11.0.3</keycloak.version>
+		<keycloak.version>12.0.1</keycloak.version>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 		<mysql.test.port>3336</mysql.test.port>
@@ -151,14 +151,14 @@
 					<skip>${skipTests}</skip>
 					<autoPull>true</autoPull>
 					<images>
-						<image>
-							<name>mysql:8.0</name>
+						<!-- <image>
+							<name>gennyproject/mysql:8x</name>
 							<run>
 								<env>
 									<MYSQL_USERNAME>genny</MYSQL_USERNAME>
 									<MYSQL_URL>127.0.0.1</MYSQL_URL>
 									<MYSQL_DB>gennydb</MYSQL_DB>
-									<MYSQL_PORT>3306</MYSQL_PORT>
+									<MYSQL_PORT>${mysql.test.port}:3306</MYSQL_PORT>
 									<MYSQL_ALLOW_EMPTY></MYSQL_ALLOW_EMPTY>
 									<MYSQL_RANDOM_ROOT_PASSWORD>no</MYSQL_RANDOM_ROOT_PASSWORD>
 									<MYSQL_DATABASE>gennydb</MYSQL_DATABASE>
@@ -178,13 +178,13 @@
 									<color>cyan</color>
 								</log>
 								<wait>
-									<log>ready for connections</log>
-									<time>20000</time>
+									<log>ready for connections.</log>
+									<time>30000</time>
 									<shutdown>5000</shutdown>
 									<kill>5000</kill>
 								</wait>
 							</run>
-						</image>
+						</image>-->
 						<!-- <image> <name>quay.io/keycloak/keycloak:11.0.3</name> <run> <env> 
 							<KEYCLOAK_USER>admin</KEYCLOAK_USER> <KEYCLOAK_PASSWORD>admin</KEYCLOAK_PASSWORD> 
 							</env> <ports> <port>${keycloak.test.port}:8180</port> </ports> <log> <prefix>Keycloak:</prefix> 
