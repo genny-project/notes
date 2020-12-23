@@ -45,7 +45,7 @@ public class GennyServers implements QuarkusTestResourceLifecycleManager {
 
     	  mysql = new FixedHostPortGenericContainer("gennyproject/mysql:8x")
                   .withFixedExposedPort(Integer.parseInt(MYSQL_PORT), 3333)
-                  .withExposedPorts(3306)
+                 // .withExposedPorts(3306)
                   .withNetwork(network)
                   .withNetworkAliases("mysql")
                   .withEnv("MYSQL_USERNAME","genny")
@@ -78,7 +78,7 @@ public class GennyServers implements QuarkusTestResourceLifecycleManager {
                 .withFixedExposedPort(Integer.parseInt(KEYCLOAK_SERVER_PORT), 8080)
      //           .withFixedExposedPort(Integer.parseInt(KEYCLOAK_SERVER_PORT)-37, 8443)
                 .dependsOn(mysql)
-                .withExposedPorts(8080)
+                //.withExposedPorts(8080)
                 .withNetwork(network)
                 .withImagePullPolicy(PullPolicy.alwaysPull())
                .withEnv("KEYCLOAK_USER", "admin")
@@ -98,7 +98,7 @@ public class GennyServers implements QuarkusTestResourceLifecycleManager {
                 .withClasspathResourceMapping("quarkus-realm.json", "/config/realm.json", BindMode.READ_ONLY)
                 .waitingFor(Wait.forHttp("/auth"))
                 .withLogConsumer(logConsumer)
-                .withStartupTimeout(Duration.ofMinutes(3));
+                .withStartupTimeout(Duration.ofMinutes(5));
         
         System.out.println("Keycloak Starting");
         keycloak.start();
