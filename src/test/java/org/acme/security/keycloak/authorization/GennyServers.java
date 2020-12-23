@@ -44,7 +44,7 @@ public class GennyServers implements QuarkusTestResourceLifecycleManager {
         Network network = Network.newNetwork();
 
     	  mysql = new FixedHostPortGenericContainer("gennyproject/mysql:8x")
-                 // .withFixedExposedPort(Integer.parseInt(MYSQL_PORT), 3333)
+                  .withFixedExposedPort(Integer.parseInt(MYSQL_PORT), 3333)
                   .withExposedPorts(3306)
                   .withNetwork(network)
                   .withNetworkAliases("mysql")
@@ -105,7 +105,7 @@ public class GennyServers implements QuarkusTestResourceLifecycleManager {
         System.out.println("Keycloak Started");
         final String logs = keycloak.getLogs();
         
-        System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n"+logs);
+      //  System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n"+logs);
         
         keycloakUrl = "http://"+keycloak.getContainerIpAddress()+":8580";//+keycloak.getMappedPort(8080);
         System.out.println("keycloakURL = "+keycloakUrl);
