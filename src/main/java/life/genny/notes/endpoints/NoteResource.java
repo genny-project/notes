@@ -119,7 +119,7 @@ public class NoteResource {
 		ParentNote parentNote = ParentNote.findByCode(note.targetCode);
 
 		if (parentNote != null) {
-			String bridgeUrl = "http://erstwhile-wolf-genny-bridge-svc/api/service";//ConfigProvider.getConfig().getValue("quarkus.bridge.service.url", String.class);
+			String bridgeUrl = "http://erstwhile-wolf-genny-bridge-svc/api/service";//ConfigProvider.getConfig().getValue("bridge.service.url", String.class);
 
 
 			QDataNoteMessage msg = new QDataNoteMessage(note, noteStatus);

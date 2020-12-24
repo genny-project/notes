@@ -45,7 +45,7 @@ public class GennyServers implements QuarkusTestResourceLifecycleManager {
 
     	  mysql = new FixedHostPortGenericContainer("gennyproject/mysql:8x")
                   .withFixedExposedPort(Integer.parseInt(MYSQL_PORT), 3306)
-                 // .withExposedPorts(3306)
+                  .withExposedPorts(3306)
                   .withNetwork(network)
                   .withNetworkAliases("mysql")
                   .withEnv("MYSQL_USERNAME","genny")
@@ -80,7 +80,7 @@ public class GennyServers implements QuarkusTestResourceLifecycleManager {
                 .dependsOn(mysql)
                 //.withExposedPorts(8080)
                 .withNetwork(network)
-                .withImagePullPolicy(PullPolicy.alwaysPull())
+               // .withImagePullPolicy(PullPolicy.alwaysPull())
                .withEnv("KEYCLOAK_USER", "admin")
                 .withEnv("KEYCLOAK_PASSWORD", "admin")
                 .withEnv("KEYCLOAK_LOGLEVEL", "debug")
@@ -96,18 +96,19 @@ public class GennyServers implements QuarkusTestResourceLifecycleManager {
                 .withEnv("JAVA_OPTS_APPEND", "-Djava.awt.headless=true")
                 .withEnv("PREPEND_JAVA_OPTS", "-Dkeycloak.profile=preview -Dkeycloak.profile.feature.token_exchange=enabled -Dkeycloak.profile.feature.account_api=enabled")
                 .withClasspathResourceMapping("quarkus-realm.json", "/config/realm.json", BindMode.READ_ONLY)
-                .waitingFor(Wait.forHttp("/auth"))
+              //  .waitingFor(Wait.forHttp("/auth"))
+                .waitingFor(Wait.forLogMessage(".*Admin console .*", 1))
                 .withLogConsumer(logConsumer)
-                .withStartupTimeout(Duration.ofMinutes(5));
+                .withStartupTimeout(Duration.ofMinutes(8));
         
         System.out.println("Keycloak Starting");
         keycloak.start();
         System.out.println("Keycloak Started");
         final String logs = keycloak.getLogs();
         
-      //  System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n"+logs);
+       // System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n"+logs);
         
-        keycloakUrl = "http://"+keycloak.getContainerIpAddress()+":8580";//+keycloak.getMappedPort(8080);
+        keycloakUrl = "http://"+keycloak.getContainerIpAddress()+":"+KEYCLOAK_SERVER_PORT;//+keycloak.getMappedPort(8080);
         System.out.println("keycloakURL = "+keycloakUrl);
         return Collections.emptyMap();
     }
