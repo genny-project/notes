@@ -1,14 +1,21 @@
 package org.acme.security.keycloak.authorization;
 
-import io.quarkus.test.common.QuarkusTestResource;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.keycloak.representations.AccessTokenResponse;
 
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 
+
+//@ExtendWith(GennyServers.class)
 @QuarkusTest
-@QuarkusTestResource(GennyServers.class)
+@QuarkusTestResource(MySqlServer.class)
+@QuarkusTestResource(KeycloakServer.class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PolicyEnforcerTest {
 
 
@@ -19,8 +26,19 @@ public class PolicyEnforcerTest {
         RestAssured.useRelaxedHTTPSValidation();
     }
 
+//    @BeforeAll
+//    public static void setup() {
+//    	System.out.println("Starting Test Setup");
+//    
+//    }
+//    
+//    @AfterAll
+//    public static void endAll() {
+//    	System.out.println("Ending Test Setup");
+//    }
     
     @Test
+    @Order(1)
     public void testAccessToken()
     {
     	

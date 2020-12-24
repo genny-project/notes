@@ -19,7 +19,7 @@
                 Optimistically create the tables;
                 will cause background errors being logged if they already exist,
                 but is practical to retain existing data across runs (or create as needed) -->
-            <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver" />
             <property name="javax.persistence.jdbc.url" value="jdbc:mysql://127.0.0.1:3336/gennydb?zeroDateTimeBehavior=convertToNull" />
             <property name="javax.persistence.jdbc.user" value="genny" />
             <property name="javax.persistence.jdbc.password" value="password" />
