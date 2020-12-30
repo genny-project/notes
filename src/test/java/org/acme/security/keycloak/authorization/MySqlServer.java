@@ -2,8 +2,6 @@ package org.acme.security.keycloak.authorization;
 
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
-import life.genny.notes.models.Note;
-import life.genny.notes.utils.PropertiesReader;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -32,7 +30,7 @@ public class MySqlServer implements QuarkusTestResourceLifecycleManager {
 //public class GennyServers implements BeforeAllCallback, AfterAllCallback {
 
 	private static final Logger log = LoggerFactory.getLogger(MySqlServer.class);
-    public static String MYSQL_PORT = new PropertiesReader("genny.properties").getProperty("mysql.test.port","3336");
+    public static String MYSQL_PORT = "3336";//new PropertiesReader("genny.properties").getProperty("mysql.test.port","3336");
     
     
     public static GenericContainer   mysql = new FixedHostPortGenericContainer("gennyproject/mysql:8x")
@@ -89,9 +87,9 @@ public class MySqlServer implements QuarkusTestResourceLifecycleManager {
 
     @Override
     public void stop() {
-      try {
-      Thread.sleep(10000);
-      } catch (Exception e) {}
+//      try {
+//      Thread.sleep(10000);
+//      } catch (Exception e) {}
 
 //        keycloak.stop();
         mysql.stop();

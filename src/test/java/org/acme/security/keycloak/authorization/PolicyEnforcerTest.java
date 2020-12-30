@@ -1,54 +1,33 @@
 package org.acme.security.keycloak.authorization;
 
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
+import io.quarkus.test.common.QuarkusTestResource;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.keycloak.representations.AccessTokenResponse;
 
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 
-
-//@ExtendWith(GennyServers.class)
 @QuarkusTest
-@QuarkusTestResource(MySqlServer.class)
 @QuarkusTestResource(KeycloakServer.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PolicyEnforcerTest {
 
-
-//    private static final String KEYCLOAK_SERVER_URL = System.getProperty("keycloak.url", "http://localhost:"+GennyServers.KEYCLOAK_SERVER_PORT+"/auth");
+    private static final String KEYCLOAK_SERVER_URL = "http://localhost:8580/auth";//System.getProperty("keycloak.url", "http://localhost:8580/auth");
     private static final String KEYCLOAK_REALM = "quarkus";
 
     static {
         RestAssured.useRelaxedHTTPSValidation();
     }
 
-//    @BeforeAll
-//    public static void setup() {
-//    	System.out.println("Starting Test Setup");
-//    
-//    }
-//    
-//    @AfterAll
-//    public static void endAll() {
-//    	System.out.println("Ending Test Setup");
-//    }
     
     @Test
-    @Order(1)
     public void testAccessToken()
     {
-    	
-    	System.out.println("*************policyEnforcerTest : keycloak URL = "+GennyServers.keycloakUrl);
-    	
+    	System.out.println("Starting test");
     	String accessToken = getAccessToken("alice");
     	System.out.println("AccessToken Test="+accessToken);
     }
     
-   // @Test
+  //  @Test
     public void testAccessUserResource() {
         RestAssured.given().auth().oauth2(getAccessToken("alice"))
                 .when().get("/api/users/me")
@@ -93,7 +72,7 @@ public class PolicyEnforcerTest {
                 .param("client_id", "backend-service")
                 .param("client_secret", "secret")
                 .when()
-                .post(GennyServers.keycloakUrl+ "/realms/" + KEYCLOAK_REALM + "/protocol/openid-connect/token")
+                .post(KEYCLOAK_SERVER_URL + "/realms/" + KEYCLOAK_REALM + "/protocol/openid-connect/token")
                 .as(AccessTokenResponse.class).getToken();
     }
 }
