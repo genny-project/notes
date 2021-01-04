@@ -1,6 +1,10 @@
 package org.acme.security.keycloak.authorization;
 
 import io.quarkus.test.common.QuarkusTestResource;
+
+import java.util.Optional;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 import org.keycloak.representations.AccessTokenResponse;
 
@@ -11,8 +15,8 @@ import io.restassured.RestAssured;
 @QuarkusTestResource(KeycloakServer.class)
 public class PolicyEnforcerTest {
 
-    private static final String KEYCLOAK_SERVER_URL = "http://localhost:8580/auth";//System.getProperty("keycloak.url", "http://localhost:8580/auth");
-    private static final String KEYCLOAK_REALM = "quarkus";
+    @ConfigProperty(name = "quarkus.oidc.auth-server-url")
+    Optional<String> keycloakUrl;
 
     static {
         RestAssured.useRelaxedHTTPSValidation();
@@ -72,7 +76,7 @@ public class PolicyEnforcerTest {
                 .param("client_id", "backend-service")
                 .param("client_secret", "secret")
                 .when()
-                .post(KEYCLOAK_SERVER_URL + "/realms/" + KEYCLOAK_REALM + "/protocol/openid-connect/token")
+                .post(keycloakUrl.get()+ "/protocol/openid-connect/token")
                 .as(AccessTokenResponse.class).getToken();
     }
 }

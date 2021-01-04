@@ -27,8 +27,6 @@ public class KeycloakServer implements QuarkusTestResourceLifecycleManager {
     	 
     	
         keycloak = new FixedHostPortGenericContainer("quay.io/keycloak/keycloak:" + "12.0.1")//System.getProperty("keycloak.version"))
-                .withFixedExposedPort(8580, 8080)
-            //    .withFixedExposedPort(8543, 8443)
                 .withEnv("KEYCLOAK_USER", "admin")
                 .withEnv("KEYCLOAK_PASSWORD", "admin")
                 .withEnv("KEYCLOAK_LOGLEVEL", "debug")
@@ -49,7 +47,12 @@ public class KeycloakServer implements QuarkusTestResourceLifecycleManager {
         keycloak.start();
         
         keycloakUrl = "http://"+keycloak.getContainerIpAddress()+":"+keycloak.getMappedPort(8080)+"/auth/realms/quarkus";
-        System.out.println("keycloakURL = "+keycloakUrl);
+        try {
+          Thread.sleep(10000);
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
 
         
         returnCollections.putAll(Collections.singletonMap("%test.quarkus.oidc.auth-server-url", keycloakUrl));
