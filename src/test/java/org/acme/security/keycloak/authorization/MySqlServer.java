@@ -1,29 +1,18 @@
 package org.acme.security.keycloak.authorization;
 
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
-
-import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.FixedHostPortGenericContainer;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
-
-
-
-
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.FixedHostPortGenericContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+
+import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 //@QuarkusTestResource(GennyServers.class)
 public class MySqlServer implements QuarkusTestResourceLifecycleManager {
@@ -35,7 +24,7 @@ public class MySqlServer implements QuarkusTestResourceLifecycleManager {
     
     public static GenericContainer   mysql = new FixedHostPortGenericContainer("gennyproject/mysql:8x")
             .withFixedExposedPort(Integer.parseInt(MYSQL_PORT), 3306)
-           // .withExposedPorts(3306)
+            //.withExposedPorts(3306)
             .withEnv("MYSQL_USERNAME","genny")
             .withEnv("MYSQL_URL","mysql")
             .withEnv("MYSQL_DB","gennydb")
