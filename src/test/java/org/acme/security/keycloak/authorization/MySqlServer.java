@@ -35,7 +35,7 @@ public class MySqlServer implements QuarkusTestResourceLifecycleManager {
     
     public static GenericContainer   mysql = new FixedHostPortGenericContainer("gennyproject/mysql:8x")
             .withFixedExposedPort(Integer.parseInt(MYSQL_PORT), 3306)
-          //  .withExposedPorts(3306)
+           // .withExposedPorts(3306)
             .withEnv("MYSQL_USERNAME","genny")
             .withEnv("MYSQL_URL","mysql")
             .withEnv("MYSQL_DB","gennydb")
