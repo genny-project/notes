@@ -13,6 +13,7 @@ import io.restassured.RestAssured;
 
 @QuarkusTest
 @QuarkusTestResource(KeycloakServer.class)
+@QuarkusTestResource(MySqlServer.class)
 public class PolicyEnforcerTest {
 
     @ConfigProperty(name = "quarkus.oidc.auth-server-url")

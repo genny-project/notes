@@ -17,14 +17,16 @@ public class KeycloakServer implements QuarkusTestResourceLifecycleManager {
     
 	static public String keycloakUrl;
 
+    @Override
+    public int order(){
+      return 2;
+    }
 
     @Override
     public Map<String, String> start() {
     	
     	Map<String, String> returnCollections = new HashMap<String,String>();
     	
- 
-    	 
     	
         keycloak = new FixedHostPortGenericContainer("quay.io/keycloak/keycloak:" + "12.0.1")//System.getProperty("keycloak.version"))
                 .withEnv("KEYCLOAK_USER", "admin")
@@ -32,13 +34,13 @@ public class KeycloakServer implements QuarkusTestResourceLifecycleManager {
                 .withEnv("KEYCLOAK_LOGLEVEL", "debug")
                 .withEnv("KEYCLOAK_IMPORT", "/config/realm.json")
                  .dependsOn(MySqlServer.mysql)
-                .withEnv("DB_VENDOR", "H2")
-//                .withEnv("DB_VENDOR", "mysql")
-//                .withEnv("DB_ADDR", "127.0.0.1")
-//                .withEnv("DB_PORT", "3336")
-//                .withEnv("DB_DATABASE", "gennydb")
-//                .withEnv("DB_USER", "genny")
-//                .withEnv("DB_PASSWORD", "password")
+                .withEnv("DB_VENDOR", "mysql")
+                .withEnv("DB_ADDR", "mysql")
+                .withEnv("DB_PORT", "3306")
+                .withEnv("DB_DATABASE", "gennydb")
+                .withEnv("DB_USER", "genny")
+                .withNetwork(SharedNetwork.network)
+                .withEnv("DB_PASSWORD", "password")
 //                .withEnv("JAVA_OPTS_APPEND", "-Djava.awt.headless=true")
 //                .withEnv("PREPEND_JAVA_OPTS", "-Dkeycloak.profile=preview -Dkeycloak.profile.feature.token_exchange=enabled -Dkeycloak.profile.feature.account_api=enabled")
                 .withClasspathResourceMapping("quarkus-realm.json", "/config/realm.json", BindMode.READ_ONLY)
@@ -48,7 +50,7 @@ public class KeycloakServer implements QuarkusTestResourceLifecycleManager {
         
         keycloakUrl = "http://"+keycloak.getContainerIpAddress()+":"+keycloak.getMappedPort(8080)+"/auth/realms/quarkus";
         try {
-          Thread.sleep(10000);
+          Thread.sleep(30000);
         } catch (InterruptedException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();

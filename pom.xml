@@ -23,7 +23,7 @@
 		<qwanda.version>${project.version}</qwanda.version>
 		<jandex.version>1.0.7</jandex.version>
 		<surefire.version>3.0.0-M5</surefire.version>
-		<testcontainers.version>1.14.1</testcontainers.version>
+		<testcontainers.version>1.15.1</testcontainers.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>

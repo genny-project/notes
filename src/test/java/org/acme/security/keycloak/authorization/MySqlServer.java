@@ -30,12 +30,9 @@ public class MySqlServer implements QuarkusTestResourceLifecycleManager {
 //public class GennyServers implements BeforeAllCallback, AfterAllCallback {
 
 	private static final Logger log = LoggerFactory.getLogger(MySqlServer.class);
-    public static String MYSQL_PORT = "3336";//new PropertiesReader("genny.properties").getProperty("mysql.test.port","3336");
     
     
-    public static GenericContainer   mysql = new FixedHostPortGenericContainer("gennyproject/mysql:8x")
-            .withFixedExposedPort(Integer.parseInt(MYSQL_PORT), 3306)
-           // .withExposedPorts(3306)
+    public static GenericContainer<?>   mysql = new FixedHostPortGenericContainer("gennyproject/mysql:8x")
             .withEnv("MYSQL_USERNAME","genny")
             .withEnv("MYSQL_URL","mysql")
             .withEnv("MYSQL_DB","gennydb")
@@ -45,6 +42,8 @@ public class MySqlServer implements QuarkusTestResourceLifecycleManager {
             .withEnv("MYSQL_DATABASE","gennydb")
             .withEnv("MYSQL_USER","genny")
             .withEnv("MYSQL_PASSWORD","password")
+            .withNetwork(SharedNetwork.network)
+            .withNetworkAliases("mysql")
             .withEnv("MYSQL_ROOT_PASSWORD","password")
             .withEnv("ADMIN_USERNAME","admin")
             .withEnv("ADMIN_PASSWORD","password")
@@ -63,7 +62,6 @@ public class MySqlServer implements QuarkusTestResourceLifecycleManager {
     	
     	Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(log);
     	
-    	System.out.println("XXXXXMySQl Port     = "+MYSQL_PORT);
     	
  
     	  System.out.println("MySQL Starting");
