@@ -47,17 +47,17 @@ public class KeycloakServer implements QuarkusTestResourceLifecycleManager {
 //                .withEnv("JAVA_OPTS_APPEND", "-Djava.awt.headless=true")
 //                .withEnv("PREPEND_JAVA_OPTS", "-Dkeycloak.profile=preview -Dkeycloak.profile.feature.token_exchange=enabled -Dkeycloak.profile.feature.account_api=enabled")
                 .withClasspathResourceMapping("quarkus-realm.json", "/config/realm.json", BindMode.READ_ONLY)
-                .waitingFor(Wait.forHttp("/auth"))
+                .waitingFor(Wait.forLogMessage(".*Admin console listening.*\\n", 1))
                 .withStartupTimeout(Duration.ofMinutes(2));
         keycloak.start();
         
         keycloakUrl = "http://"+keycloak.getContainerIpAddress()+":"+keycloak.getMappedPort(8080)+"/auth/realms/quarkus";
-        try {
-          Thread.sleep(30000);
-        } catch (InterruptedException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
+        //try {
+          //Thread.sleep(30000);
+        //} catch (InterruptedException e) {
+          //// TODO Auto-generated catch block
+          //e.printStackTrace();
+        //}
 
         
         returnCollections.putAll(Collections.singletonMap("%test.quarkus.oidc.auth-server-url", keycloakUrl));
