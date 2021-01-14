@@ -32,6 +32,7 @@ public class KeycloakServer implements QuarkusTestResourceLifecycleManager {
     	
     	
         keycloak = new FixedHostPortGenericContainer("quay.io/keycloak/keycloak:" + KEYCLOAK_VERSION)//System.getProperty("keycloak.version"))
+        		.withExposedPorts(8080)
                 .withEnv("KEYCLOAK_USER", "admin")
                 .withEnv("KEYCLOAK_PASSWORD", "admin")
                 .withEnv("KEYCLOAK_LOGLEVEL", "debug")
@@ -43,15 +44,17 @@ public class KeycloakServer implements QuarkusTestResourceLifecycleManager {
                 .withEnv("DB_DATABASE", "gennydb")
                 .withEnv("DB_USER", "genny")
                 .withNetwork(SharedNetwork.network)
+                .withNetworkAliases("keycloak")
                 .withEnv("DB_PASSWORD", "password")
-//                .withEnv("JAVA_OPTS_APPEND", "-Djava.awt.headless=true")
-//                .withEnv("PREPEND_JAVA_OPTS", "-Dkeycloak.profile=preview -Dkeycloak.profile.feature.token_exchange=enabled -Dkeycloak.profile.feature.account_api=enabled")
+                .withEnv("JAVA_OPTS_APPEND", "-Djava.awt.headless=true")
+                .withEnv("PREPEND_JAVA_OPTS", "-Dkeycloak.profile=preview -Dkeycloak.profile.feature.token_exchange=enabled -Dkeycloak.profile.feature.account_api=enabled")
                 .withClasspathResourceMapping("quarkus-realm.json", "/config/realm.json", BindMode.READ_ONLY)
                 .waitingFor(Wait.forLogMessage(".*Admin console listening.*\\n", 1))
                 .withStartupTimeout(Duration.ofMinutes(2));
         keycloak.start();
         
         keycloakUrl = "http://"+keycloak.getContainerIpAddress()+":"+keycloak.getMappedPort(8080)+"/auth/realms/quarkus";
+        
         //try {
           //Thread.sleep(30000);
         //} catch (InterruptedException e) {
