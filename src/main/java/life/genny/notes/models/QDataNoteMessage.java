@@ -103,6 +103,10 @@ public class QDataNoteMessage extends QDataMessage{
 		this.status = status;
 	}
 	
+	
+	public Note[] getItems() {
+		return items;
+	}
 
 	
 }
