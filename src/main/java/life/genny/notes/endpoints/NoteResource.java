@@ -174,7 +174,11 @@ public class NoteResource {
 		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
 		List<Tag> tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
 		QDataNoteMessage notes = Note.findByTargetAndTags(userToken, tagList, targetCode, Page.of(pageIndex, pageSize));
-
+		if (notes.items.isEmpty()) {
+			List<String> targetCodes = new ArrayList<>();
+			targetCodes.add(targetCode);
+			notes.setTargetCodes(targetCodes);	
+		}
 		return Response.status(Status.OK).entity(notes).build();
 	}
 
