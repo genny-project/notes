@@ -1,5 +1,4 @@
 #!/bin/bash
-#./build.sh
 
 project=${PWD##*/}
 realm=gennyproject
@@ -28,4 +27,4 @@ else
   docker images | grep ${project} | grep none | awk '{print $3}' | xargs docker rmi
 fi
 
-docker tag ${realm}/${project}:latest ${realm}/${project}:${version} 
+docker tag ${realm}/${project}:latest ${realm}/${project}:${version}

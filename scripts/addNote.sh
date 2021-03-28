@@ -71,7 +71,7 @@ On_IBlue='\033[0;104m'    # Blue
 On_IPurple='\033[0;105m'  # Purple
 On_ICyan='\033[0;106m'    # Cyan
 On_IWhite='\033[0;107m'   # White
-if [ $# -ne 4 ]
+if [ $# -ne 5 ]
 then
    echo "usage: addNote.sh <serverUl> <BASEENTITYCODE> <message> <tag>"
    echo "e.g. ./addNote.sh http://localhost :8095 PER_USER1 'Hello everyone' phone "
@@ -82,17 +82,12 @@ key=$2
 message=$3
 tag=$4
 url=$1
-echo ${mydate} ${url}  $key $message $tag
-access_token=$(\
-    curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token \
-    --user backend:6781baee-3b97-4b01-bcd4-b14aecd38fd8 \
-    -H 'content-type: application/x-www-form-urlencoded' \
-    -d 'username=user1&password=WelcomeToTheHub121!&grant_type=password' | jq --raw-output '.access_token' \
- )
+password=$5
+echo ${mydate} ${url}  $key $message $tag $password
+KEYCLOAK_RESPONSE=`curl -s -X POST https://keycloak.gada.io/auth/realms/internmatch/protocol/openid-connect/token  -H "Content-Type: application/x-www-form-urlencoded" -d 'username=testuser@gada.io' -d "password=${password}" -d 'grant_type=password' -d 'client_id=alyson' `
 #echo $KEYCLOAK_RESPONSE
 #printf "${RED}Parsing access_token field, as we don't need the other elements:${NORMAL}\n"
 TOKEN=`echo "$KEYCLOAK_RESPONSE" | jq -r '.access_token'`
-TOKEN=$access_token
 echo $TOKEN
 echo $url
 echo ""
