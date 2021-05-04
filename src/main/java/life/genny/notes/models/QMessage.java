@@ -38,6 +38,9 @@ public abstract class QMessage implements Serializable, QMessageIntf {
 
 	
 	private String triggerCode; // This can be used to trigger any option
+	
+	
+	private String targetCode;
 
 	
 	private List<String> targetCodes;
@@ -104,6 +107,21 @@ public abstract class QMessage implements Serializable, QMessageIntf {
 	public void setTriggerCode(String triggerCode) {
 		this.triggerCode = triggerCode;
 	}
+	
+	/**
+	 * @return the triggerCode
+	 */
+	public String getTargetCode() {
+		return targetCode;
+	}
+
+	/**
+	 * @param triggerCode the triggerCode to set
+	 */
+	public void setTargetCode(String targetCode) {
+		this.targetCode = targetCode;
+	}
+	
 
 	/**
 	 * @return the targetCodes
