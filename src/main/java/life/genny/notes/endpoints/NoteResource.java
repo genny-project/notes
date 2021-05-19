@@ -184,7 +184,7 @@ public class NoteResource {
 				targetCodes.add(targetCode);
 				notes.setTargetCodes(targetCodes);	
 			} else {
-				log.info("notes.getItems had a length of 0");
+				log.info("notes.getItems: " +notes.getItems().length);
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
