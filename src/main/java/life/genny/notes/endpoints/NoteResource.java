@@ -160,7 +160,7 @@ public class NoteResource {
 	@GET
 	@Transactional
 	public Response getNotesByTargetCodeAndTags(@PathParam("targetCode") final String targetCode,
-			@QueryParam("tags") @DefaultValue("") String tags, @QueryParam("tc") List<String> tcs,
+			@QueryParam("tags") @DefaultValue("") String tags,
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
 			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
 		// Object userName = this.idToken.getClaim("preferred_username");
@@ -173,16 +173,11 @@ public class NoteResource {
 
 		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
 		List<Tag> tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
-		List<String> targetCodes = new ArrayList<>();
-		QDataNoteMessage notes = null;
-		for (String tc : tcs) {
-			log.info("tc: " + tc);
-			notes = Note.findByTargetAndTags(userToken, tagList, tc, Page.of(pageIndex, pageSize));
-			log.info("notes: " + notes);
-			if (notes.getItems().length == 0) {
-				targetCodes.add(tc);
-				notes.setTargetCodes(targetCodes);	
-			}
+		QDataNoteMessage notes = Note.findByTargetAndTags(userToken, tagList, targetCode, Page.of(pageIndex, pageSize));
+		if (notes.getItems().length == 0) {
+			List<String> targetCodes = new ArrayList<>();
+			targetCodes.add(targetCode);
+			notes.setTargetCodes(targetCodes);	
 		}
 		return Response.status(Status.OK).entity(notes).build();
 	}
