@@ -132,6 +132,9 @@ public class Note extends PanacheEntity {
 			notes = Note.find(
 					"select n from Note n  where n.realm = :realm  and n.targetCode = :targetCode  order by n.created",
 					Parameters.with("realm",  userToken.getRealm()).and("targetCode", targetCode));
+			
+			notes = Note.find("targetCode", "APP_8CC599CA-CA86-4AC3-A0C6-24B025B40D92");
+			log.info("note " + notes);
 			if (notes.count()>0 ) {
 				total = Note.count("realm = :realm  and targetCode = :targetCode",
 						Parameters.with("realm",  userToken.getRealm()).and("targetCode", targetCode));
