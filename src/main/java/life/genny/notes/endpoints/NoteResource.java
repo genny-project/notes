@@ -164,23 +164,31 @@ public class NoteResource {
 			@QueryParam("pageIndex") @DefaultValue("0") Integer pageIndex,
 			@QueryParam("pageSize") @DefaultValue("20") Integer pageSize) {
 		// Object userName = this.idToken.getClaim("preferred_username");
+	
+		QDataNoteMessage notes = null;
+		try {
+			GennyToken userToken = new GennyToken(accessToken.getRawToken());
+			log.info("GennyToken = " + userToken);
+			processParentNote(userToken, targetCode);
+			log.info("Got here");
 
-		GennyToken userToken = new GennyToken(accessToken.getRawToken());
-		log.info("GennyToken = " + userToken);
-		processParentNote(userToken, targetCode);
+			// TODO - Check user access security here.
 
-		// TODO - Check user access security here.
-
-		List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
-		List<Tag> tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
-		QDataNoteMessage notes = Note.findByTargetAndTags(userToken, tagList, targetCode, Page.of(pageIndex, pageSize));
-		log.info("notes = " + notes);
-		if (notes.getItems().length == 0) {
-			List<String> targetCodes = new ArrayList<>();
-			targetCodes.add(targetCode);
-			notes.setTargetCodes(targetCodes);	
-		} else {
-			log.info("notes.getItems had a length of 0");
+			List<String> tagStringList = Arrays.asList(StringUtils.splitPreserveAllTokens(tags, ","));
+			List<Tag> tagList = tagStringList.stream().collect(Collectors.mapping(p -> new Tag(p), Collectors.toList()));
+			log.info("Why are you not working = ");
+			notes = Note.findByTargetAndTags(userToken, tagList, targetCode, Page.of(pageIndex, pageSize));
+			log.info("notes = " + notes);
+			if (notes.getItems().length == 0) {
+				List<String> targetCodes = new ArrayList<>();
+				targetCodes.add(targetCode);
+				notes.setTargetCodes(targetCodes);	
+			} else {
+				log.info("notes.getItems had a length of 0");
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return Response.status(Status.OK).entity(notes).build();
 	}

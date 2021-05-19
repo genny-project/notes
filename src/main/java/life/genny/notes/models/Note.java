@@ -110,6 +110,7 @@ public class Note extends PanacheEntity {
 
 	public static QDataNoteMessage findByTargetAndTags(final GennyToken userToken, final List<Tag> tags, final String targetCode,
 			Page page) {
+		log.info("Got to here");
 		List<String> tagStringList = tags.stream().collect(Collectors.mapping(p -> p.getName(), Collectors.toList()));
 
 		PanacheQuery<Note> notes = null;
