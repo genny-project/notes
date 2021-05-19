@@ -118,6 +118,7 @@ public class Note extends PanacheEntity {
 
 
 		if (!tagStringList.isEmpty()) {
+			log.info("With tags = usertoken: " +  userToken.getRealm() + " targetcode: " + targetCode + "taglist " + tagStringList);
 			notes = Note.find(
 					"select n from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags) and n.targetCode = :targetCode  order by n.created",
 					Parameters.with("realm",  userToken.getRealm()).and("targetCode", targetCode).and("tags", tagStringList));
@@ -127,6 +128,7 @@ public class Note extends PanacheEntity {
 			}
 
 		} else {
+			log.info("usertoken Realm: " +  userToken.getRealm() + " targetcode: " + targetCode);
 			notes = Note.find(
 					"select n from Note n  where n.realm = :realm  and n.targetCode = :targetCode  order by n.created",
 					Parameters.with("realm",  userToken.getRealm()).and("targetCode", targetCode));
