@@ -96,7 +96,7 @@ public class Note extends PanacheEntity {
 						Parameters.with("realm",  userToken.getRealm()).and("tags", tagStringList));
 			}
 		} else {
-			notes = Note.find("select n from Note n  where n.realm = :realm  order by n.created",
+			notes = Note.find("select n from Note n  where n.realm = :realm  order by n.created desc",
 					Parameters.with("realm",  userToken.getRealm()));
 			if (notes.count()>0 ) {
 				total = Note.count("realm", userToken.getRealm());
