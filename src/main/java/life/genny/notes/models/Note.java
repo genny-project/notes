@@ -88,7 +88,7 @@ public class Note extends PanacheEntity {
 		Long total = 0L;
 		if (!tagStringList.isEmpty()) {
 			notes = Note.find(
-					"select n from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags)  order by n.created",
+					"select n from Note n JOIN n.tags t where n.realm = :realm and t.name in (:tags)  order by n.created desc",
 					Parameters.with("realm", userToken.getRealm()).and("tags", tagStringList));
 			
 			if (notes.count()>0 ) {
@@ -96,7 +96,7 @@ public class Note extends PanacheEntity {
 						Parameters.with("realm",  userToken.getRealm()).and("tags", tagStringList));
 			}
 		} else {
-			notes = Note.find("select n from Note n  where n.realm = :realm  order by n.created asc",
+			notes = Note.find("select n from Note n  where n.realm = :realm  order by n.created desc",
 					Parameters.with("realm",  userToken.getRealm()));
 			if (notes.count()>0 ) {
 				total = Note.count("realm", userToken.getRealm());
