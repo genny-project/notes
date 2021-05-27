@@ -99,6 +99,7 @@ public class NoteResource {
 		note.id = null;
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
+		log.info("note = " + note);
 		note.realm = userToken.getRealm();
 		/*note.sourceCode = userToken.getUserCode();*/
 
