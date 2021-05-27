@@ -100,7 +100,7 @@ public class NoteResource {
 		GennyToken userToken = new GennyToken(accessToken.getRawToken());
 		log.info("GennyToken = " + userToken);
 		note.realm = userToken.getRealm();
-		note.sourceCode = userToken.getUserCode(); // force
+		/*note.sourceCode = userToken.getUserCode();*/
 
 		note.persist();
 		
